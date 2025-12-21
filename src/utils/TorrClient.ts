@@ -91,7 +91,7 @@ export const TorrClient = {
   },
 
   pause: async (hash = "") => {
-    return await APICall.post("torrents/pause", `hashes=${hash}`);
+    return await APICall.post("torrents/stop", `hashes=${hash}`);
   },
 
   pauseAll: async () => {
