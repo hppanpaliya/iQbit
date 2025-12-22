@@ -10,9 +10,12 @@ export interface SegmentedPickerProps {
   options: string[];
   selected: number;
   onSelect: (index: number) => void;
+  sticky?: boolean;
 }
 
 const SegmentedPicker = (props: SegmentedPickerProps) => {
+  const isSticky = props.sticky !== false; // Default to true for backward compatibility
+  
   return (
     <GlassContainer
       noTint
@@ -20,9 +23,9 @@ const SegmentedPicker = (props: SegmentedPickerProps) => {
       p={2}
       mt={3}
       mb={5}
-      position={"sticky"}
-      top={"max(5px, env(safe-area-inset-top))"}
-      zIndex={2}
+      position={isSticky ? "sticky" : "relative"}
+      top={isSticky ? "max(5px, env(safe-area-inset-top))" : undefined}
+      zIndex={isSticky ? 2 : undefined}
     >
       <SimpleGrid columns={props.options.length} rounded={"lg"}>
         {props.options.map((option, index) => (
