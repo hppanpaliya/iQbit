@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { SearchProviderComponentProps } from "../types";
 import IosSearch from "../components/ios/IosSearch";
 import {
@@ -80,14 +80,22 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
     }
   );
 
+  const [isStopped, setIsStopped] = useState(false);
+
   const { data } = useQuery(
     "getSearches",
     () => TorrClient.getResults(searchId!),
     {
-      refetchInterval: 1000,
+      refetchInterval: !isStopped ? 1000 : false,
       enabled: !!searchId,
     }
   );
+
+  useEffect(() => {
+    if (data?.status === "Stopped") {
+      setIsStopped(true);
+    }
+  }, [data?.status]);
 
   const filteredResults = useMemo(() => {
     return (data?.results || [])
@@ -145,9 +153,11 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
           zIndex={50}
         >
           <Flex alignItems={"center"} gap={4}>
-            <Spinner color={"blue.500"} />
+            {data?.status !== "Stopped" && <Spinner color={"blue.500"} />}
             <Flex flexDirection={"column"} alignItems={"start"}>
-              <Heading size={"md"}>Search in progress...</Heading>
+              <Heading size={"md"}>
+                {data?.status === "Stopped" ? "Search stopped" : "Search in progress..."}
+              </Heading>
               <StatWithIcon
                 icon={<IoList />}
                 label={(data?.total || 0) + " Results"}
@@ -159,8 +169,9 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
               leftIcon={<IoStop />}
               colorScheme={"blue"}
               onClick={() => stopSearch()}
+              isDisabled={data?.status === "Stopped"}
             >
-              Stop
+              {data?.status === "Stopped" ? "Stopped" : "Stop"}
             </Button>
           </LightMode>
         </Flex>
