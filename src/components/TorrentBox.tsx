@@ -22,7 +22,7 @@ import {
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
-import { TorrCategory, TorrTorrentInfo } from "../types";
+import { TorrCategory, TorrTorrentInfo, TorrFilePriority } from "../types";
 import stateDictionary from "../utils/StateDictionary";
 import filesize from "filesize";
 import {
@@ -37,12 +37,13 @@ import {
   IoSpeedometer,
 } from "react-icons/io5";
 import { StatWithIcon } from "./StatWithIcon";
-import { useMutation } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import { TorrClient } from "../utils/TorrClient";
 import IosActionSheet from "./ios/IosActionSheet";
 import IosBottomSheet from "./ios/IosBottomSheet";
 import { Input } from "@chakra-ui/input";
 import TorrentInformationContent from "./TorrentInformationContent";
+import FileList from "./FileList";
 import { CreateETAString } from "../utils/createETAString";
 
 export interface TorrentBoxProps {
@@ -248,6 +249,34 @@ const TorrentBox = ({
     }
   );
 
+  // File operations
+  const filesDisclosure = useDisclosure();
+  const { data: torrentFiles = [], isLoading: filesLoading } = useQuery(
+    ["torrentFiles", hash],
+    () => TorrClient.getTorrentContents(hash),
+    {
+      enabled: filesDisclosure.isOpen,
+      refetchInterval: filesDisclosure.isOpen ? 5000 : false,
+    }
+  );
+
+  const { mutate: setFilePriority } = useMutation(
+    "setFilePriority",
+    ({ fileIndex, priority }: { fileIndex: number; priority: TorrFilePriority }) =>
+      TorrClient.setFilePriority(hash, fileIndex, priority)
+  );
+
+  const { mutate: setFilePriorities } = useMutation(
+    "setFilePriorities",
+    ({
+      fileIndices,
+      priority,
+    }: {
+      fileIndices: number[];
+      priority: TorrFilePriority;
+    }) => TorrClient.setFilePriorities(hash, fileIndices, priority)
+  );
+
   const actionSheetDisclosure = useDisclosure();
 
   if (loading) {
@@ -415,6 +444,10 @@ const TorrentBox = ({
                   onClick: () => reannounce(),
                 },
                 {
+                  label: "Manage Files",
+                  onClick: () => filesDisclosure.onOpen(),
+                },
+                {
                   label: "Move to Location",
                   onClick: () => moveDisclosure.onOpen(),
                 },
@@ -514,6 +547,38 @@ const TorrentBox = ({
         modalProps={{ size: "3xl" }}
       >
         <TorrentInformationContent torrentData={{ ...torrentData, hash }} />
+      </IosBottomSheet>
+      <IosBottomSheet
+        title={"Manage Files"}
+        disclosure={filesDisclosure}
+        modalProps={{ size: "4xl" }}
+      >
+        <FileList
+          files={torrentFiles}
+          loading={filesLoading}
+          onSetPriority={(fileIndex, priority) =>
+            new Promise((resolve, reject) => {
+              setFilePriority(
+                { fileIndex, priority },
+                {
+                  onSuccess: () => resolve(),
+                  onError: reject,
+                }
+              );
+            })
+          }
+          onSetMultiplePriorities={(fileIndices, priority) =>
+            new Promise((resolve, reject) => {
+              setFilePriorities(
+                { fileIndices, priority },
+                {
+                  onSuccess: () => resolve(),
+                  onError: reject,
+                }
+              );
+            })
+          }
+        />
       </IosBottomSheet>
       <IosBottomSheet
         title={"Move to Location"}

@@ -477,3 +477,23 @@ export type rarbgTorrent = {
   ranked: number;
   info_page: string;
 };
+
+export type TorrFilePriority = 0 | 1 | 2 | 7; // 0=skip, 1=normal, 2=high, 7=maximal
+
+export type TorrFile = {
+  index: number;
+  name: string;
+  size: number;
+  progress: number;
+  priority: TorrFilePriority;
+  is_seed?: boolean;
+  piece_range?: [number, number];
+};
+
+export type TorrFileContent = {
+  index: number;
+  name: string;
+  size: number;
+  progress: number;
+  priority: TorrFilePriority;
+};

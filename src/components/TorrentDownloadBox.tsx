@@ -8,7 +8,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { useIsLargeScreen } from "../utils/screenSize";
-import { useMutation } from "react-query";
+import { useMutation, useQueryClient } from "react-query";
 import { TorrClient } from "../utils/TorrClient";
 import { IoCheckmark } from "react-icons/io5";
 
@@ -27,10 +27,17 @@ const TorrentDownloadBox = ({
   category,
 }: PropsWithChildren<TorrentDownloadBoxProps>) => {
   const isLarge = useIsLargeScreen();
+  const queryClient = useQueryClient();
 
   const { mutate, isLoading, isSuccess } = useMutation(
     "addBox",
-    (magnetURLParam: string) => TorrClient.addTorrent("urls", magnetURLParam, category)
+    (magnetURLParam: string) => TorrClient.addTorrent("urls", magnetURLParam, category),
+    {
+      onSuccess: () => {
+        // Invalidate torrent queries to show new torrent immediately
+        queryClient.invalidateQueries("torrentsTxData");
+      }
+    }
   );
 
   const {

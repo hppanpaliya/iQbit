@@ -6,6 +6,8 @@ import {
   TorrPluginSearchResultResponse,
   TorrSettings,
   TorrTorrentInfo,
+  TorrFile,
+  TorrFilePriority,
 } from "../types";
 
 let serverAddress = new URL(".", window.location.href).href
@@ -268,5 +270,29 @@ export const TorrClient = {
       `pattern=${query}&plugins=enabled&category=all`
     );
     return data;
+  },
+  getTorrentContents: async (hash: string): Promise<TorrFile[]> => {
+    const { data } = await APICall.get("torrents/files", {
+      params: {
+        hash,
+      },
+    });
+
+    return data;
+  },
+
+  setFilePriority: async (hash: string, fileIndex: number, priority: TorrFilePriority) => {
+    return await APICall.post(
+      "torrents/filePrio",
+      `hash=${hash}&id=${fileIndex}&priority=${priority}`
+    );
+  },
+
+  setFilePriorities: async (hash: string, fileIndices: number[], priority: TorrFilePriority) => {
+    const ids = fileIndices.join("|");
+    return await APICall.post(
+      "torrents/filePrio",
+      `hash=${hash}&id=${ids}&priority=${priority}`
+    );
   },
 };

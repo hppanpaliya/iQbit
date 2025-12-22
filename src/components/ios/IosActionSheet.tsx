@@ -61,8 +61,8 @@ function IosActionSheet<Y>({
 
   // Use Drawer for mobile/touch devices, Menu for desktop
   if (isTouchDevice) {
-    const triggerWithToggle = trigger ? React.cloneElement(trigger, {
-      onClick: (e) => {
+    const triggerWithToggle = trigger ? React.cloneElement(trigger as React.ReactElement<any>, {
+      onClick: (e: { stopPropagation: () => void; }) => {
         e.stopPropagation();
         disclosure.onToggle();
       }
@@ -181,7 +181,7 @@ function IosActionSheet<Y>({
   }
 
   // Desktop version - Menu
-  const triggerWithoutOnClick = trigger ? React.cloneElement(trigger, { }) : null;
+  const triggerWithoutOnClick = trigger ? React.cloneElement(trigger as React.ReactElement<any>, { onClick: undefined }) : null;
   return (
     <>
       <Menu
