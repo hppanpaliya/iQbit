@@ -26,7 +26,6 @@ import { TorrCategory, TorrTorrentInfo } from "../types";
 import stateDictionary from "../utils/StateDictionary";
 import filesize from "filesize";
 import {
-  IoArrowDown,
   IoCalendar,
   IoCloudUpload,
   IoDownload,
@@ -92,6 +91,11 @@ const TorrentBox = ({
     | "sequential"
     | "firstLastPriority"
     | "autoManagement"
+    | "recheck"
+    | "reannounce"
+    | "location"
+    | "downloadLimit"
+    | "uploadLimit"
   >();
 
   useEffect(() => {
@@ -187,7 +191,62 @@ const TorrentBox = ({
     }
   );
 
+  const { mutate: recheck } = useMutation(
+    "recheck",
+    () => TorrClient.recheck(hash),
+    {
+      onMutate: () => setWaiting("recheck"),
+      onError: () => setWaiting(""),
+    }
+  );
+
+  const { mutate: reannounce } = useMutation(
+    "reannounce",
+    () => TorrClient.reannounce(hash),
+    {
+      onMutate: () => setWaiting("reannounce"),
+      onError: () => setWaiting(""),
+    }
+  );
+
   const TorrentInformationDisclosure = useDisclosure();
+
+  const moveDisclosure = useDisclosure();
+  const [newLocation, setNewLocation] = useState("");
+  const [moveFiles, setMoveFiles] = useState(true);
+  const { mutate: setLocationMutation, isLoading: locationLoading } = useMutation(
+    "setLocation",
+    () => TorrClient.setLocation(hash, newLocation, moveFiles),
+    {
+      onMutate: () => setWaiting("location"),
+      onError: () => setWaiting(""),
+      onSuccess: () => moveDisclosure.onClose(),
+    }
+  );
+
+  const setDownloadLimitDisclosure = useDisclosure();
+  const [downloadLimit, setDownloadLimit] = useState("");
+  const { mutate: setDownloadLimitMutation, isLoading: downloadLimitLoading } = useMutation(
+    "setDownloadLimit",
+    () => TorrClient.setDownloadLimit(hash, downloadLimit),
+    {
+      onMutate: () => setWaiting("downloadLimit"),
+      onError: () => setWaiting(""),
+      onSuccess: () => setDownloadLimitDisclosure.onClose(),
+    }
+  );
+
+  const setUploadLimitDisclosure = useDisclosure();
+  const [uploadLimit, setUploadLimit] = useState("");
+  const { mutate: setUploadLimitMutation, isLoading: uploadLimitLoading } = useMutation(
+    "setUploadLimit",
+    () => TorrClient.setUploadLimit(hash, uploadLimit),
+    {
+      onMutate: () => setWaiting("uploadLimit"),
+      onError: () => setWaiting(""),
+      onSuccess: () => setUploadLimitDisclosure.onClose(),
+    }
+  );
 
   const actionSheetDisclosure = useDisclosure();
 
@@ -307,13 +366,15 @@ const TorrentBox = ({
           <Flex gap={0.5}>
             <IosActionSheet
               trigger={
-                <Button
-                  variant={"ghost"}
-                  size={"md"}
-                  onClick={actionSheetDisclosure.onOpen}
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  cursor="pointer"
+                  px="16px"
                 >
                   <IoOptions size={25} />
-                </Button>
+                </Box>
               }
               disclosure={actionSheetDisclosure}
               options={[
@@ -325,6 +386,10 @@ const TorrentBox = ({
                 {
                   label: "Change Category",
                   onClick: () => categoryChangeDisclosure.onOpen(),
+                },
+                {
+                  label: "Rename Torrent",
+                  onClick: () => renameTorrentDisclosure.onOpen(),
                 },
                 {
                   label: `Sequential Download`,
@@ -342,8 +407,24 @@ const TorrentBox = ({
                   checked: torrentData.auto_tmm,
                 },
                 {
-                  label: "Rename Torrent",
-                  onClick: () => renameTorrentDisclosure.onOpen(),
+                  label: "Recheck Torrent",
+                  onClick: () => recheck(),
+                },
+                {
+                  label: "Reannounce Torrent",
+                  onClick: () => reannounce(),
+                },
+                {
+                  label: "Move to Location",
+                  onClick: () => moveDisclosure.onOpen(),
+                },
+                {
+                  label: "Set Download Limit",
+                  onClick: () => setDownloadLimitDisclosure.onOpen(),
+                },
+                {
+                  label: "Set Upload Limit",
+                  onClick: () => setUploadLimitDisclosure.onOpen(),
                 },
                 {
                   label: "Torrent Information",
@@ -402,28 +483,22 @@ const TorrentBox = ({
       <IosBottomSheet
         title={"Rename Torrent"}
         disclosure={renameTorrentDisclosure}
+        modalProps={{ size: "lg" }}
       >
-        <VStack gap={10}>
+        <VStack gap={6}>
           <FormControl>
-            <FormLabel>Rename Torrent</FormLabel>
+            <FormLabel>New Name</FormLabel>
             <Input
               disabled={renameLoading}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
+              autoFocus
+              onFocus={(e) => e.currentTarget.select()}
             />
-            {newName !== torrentData.name && (
-              <FormHelperText fontSize={"sm"} textAlign={"center"}>
-                <VStack mt={7}>
-                  <span>{torrentData.name}</span>
-                  <IoArrowDown />
-                  <span>{newName}</span>
-                </VStack>
-              </FormHelperText>
-            )}
           </FormControl>
           <LightMode>
             <Button
-              disabled={newName === torrentData.name}
+              disabled={newName === torrentData.name || !newName.trim()}
               w={"100%"}
               onClick={() => renameTorrent()}
               isLoading={renameLoading}
@@ -439,6 +514,122 @@ const TorrentBox = ({
         modalProps={{ size: "3xl" }}
       >
         <TorrentInformationContent torrentData={{ ...torrentData, hash }} />
+      </IosBottomSheet>
+      <IosBottomSheet
+        title={"Move to Location"}
+        disclosure={moveDisclosure}
+        modalProps={{ size: "lg" }}
+      >
+        <VStack gap={6}>
+          <FormControl>
+            <FormLabel>Current Location</FormLabel>
+            <Box
+              p={3}
+              borderRadius="md"
+              bg="grayAlpha.200"
+              wordBreak="break-all"
+              fontSize="sm"
+            >
+              {torrentData.save_path || torrentData.content_path || "Unknown"}
+            </Box>
+          </FormControl>
+          <FormControl>
+            <FormLabel>New Location</FormLabel>
+            <Input
+              disabled={locationLoading}
+              placeholder="/path/to/move"
+              value={newLocation}
+              onChange={(e) => setNewLocation(e.target.value)}
+            />
+            <FormHelperText fontSize={"sm"} textAlign={"center"}>
+              Move the torrent to a new location
+            </FormHelperText>
+          </FormControl>
+          <FormControl display="flex" alignItems="center">
+            <input
+              type="checkbox"
+              checked={moveFiles}
+              onChange={(e) => setMoveFiles(e.target.checked)}
+              disabled={locationLoading}
+              style={{ marginRight: "8px", cursor: "pointer" }}
+            />
+            <FormLabel mb={0} cursor="pointer">
+              Move files to new location
+            </FormLabel>
+          </FormControl>
+          <LightMode>
+            <Button
+              disabled={!newLocation || newLocation.trim() === ""}
+              w={"100%"}
+              onClick={() => setLocationMutation()}
+              isLoading={locationLoading}
+            >
+              Move Torrent
+            </Button>
+          </LightMode>
+        </VStack>
+      </IosBottomSheet>
+      <IosBottomSheet
+        title={"Set Download Limit"}
+        disclosure={setDownloadLimitDisclosure}
+        modalProps={{ size: "lg" }}
+      >
+        <VStack gap={6}>
+          <FormControl>
+            <FormLabel>Download Limit (bytes/s)</FormLabel>
+            <Input
+              disabled={downloadLimitLoading}
+              placeholder="0 for unlimited"
+              type="number"
+              value={downloadLimit}
+              onChange={(e) => setDownloadLimit(e.target.value)}
+            />
+            <FormHelperText fontSize={"sm"} textAlign={"center"}>
+              Enter 0 for unlimited download speed
+            </FormHelperText>
+          </FormControl>
+          <LightMode>
+            <Button
+              disabled={downloadLimit === ""}
+              w={"100%"}
+              onClick={() => setDownloadLimitMutation()}
+              isLoading={downloadLimitLoading}
+            >
+              Set Download Limit
+            </Button>
+          </LightMode>
+        </VStack>
+      </IosBottomSheet>
+      <IosBottomSheet
+        title={"Set Upload Limit"}
+        disclosure={setUploadLimitDisclosure}
+        modalProps={{ size: "lg" }}
+      >
+        <VStack gap={6}>
+          <FormControl>
+            <FormLabel>Upload Limit (bytes/s)</FormLabel>
+            <Input
+              disabled={uploadLimitLoading}
+              placeholder="0 for unlimited"
+              type="number"
+              value={uploadLimit}
+              onChange={(e) => setUploadLimit(e.target.value)}
+            />
+            <FormHelperText fontSize={"sm"} textAlign={"center"}>
+              Enter 0 for unlimited upload speed
+            </FormHelperText>
+          </FormControl>
+          <LightMode>
+            <Button
+              disabled={uploadLimit === ""}
+              w={"100%"}
+              onClick={() => setUploadLimitMutation()}
+              isLoading={uploadLimitLoading}
+            >
+              Set Upload Limit
+            </Button>
+          </LightMode>
+        </VStack>
       </IosBottomSheet>
     </div>
   );

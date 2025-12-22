@@ -198,6 +198,30 @@ export const TorrClient = {
     );
   },
 
+  recheck: async (hash: string) => {
+    return await APICall.post("torrents/recheck", `hashes=${hash}`);
+  },
+
+  reannounce: async (hash: string) => {
+    return await APICall.post("torrents/reannounce", `hashes=${hash}`);
+  },
+
+  setLocation: async (hash: string, location: string, moveFiles: boolean = true) => {
+    return await APICall.post("torrents/setLocation", `hashes=${hash}&location=${location}`);
+  },
+
+  renameFile: async (hash: string, oldPath: string, newPath: string) => {
+    return await APICall.post("torrents/renameFile", `hash=${hash}&oldPath=${oldPath}&newPath=${newPath}`);
+  },
+
+  setDownloadLimit: async (hash: string, limit: string) => {
+    return await APICall.post("torrents/setDownloadLimit", `hashes=${hash}&limit=${limit}`);
+  },
+
+  setUploadLimit: async (hash: string, limit: string) => {
+    return await APICall.post("torrents/setUploadLimit", `hashes=${hash}&limit=${limit}`);
+  },
+
   getInstalledPlugins: async (): Promise<TorrPlugin[]> => {
     const { data } = await APICall.get("search/plugins");
     return data;

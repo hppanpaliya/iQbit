@@ -24,12 +24,11 @@ import TorrentBox from "../components/TorrentBox";
 import { TorrTorrentInfo } from "../types";
 import IosBottomSheet from "../components/ios/IosBottomSheet";
 import { Input } from "@chakra-ui/input";
-import { useIsLargeScreen } from "../utils/screenSize";
 import { randomTorrent } from "../data";
 import "react-virtualized/styles.css";
 import { FilterHeading } from "../components/Filters";
 import stateDictionary from "../utils/StateDictionary";
-import { useLocalStorage, useTernaryDarkMode } from "usehooks-ts";
+import { useLocalStorage } from "usehooks-ts";
 import { useFontSizeContext } from "../components/FontSizeProvider";
 
 import { List, WindowScroller } from "react-virtualized";
