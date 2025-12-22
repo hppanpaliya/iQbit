@@ -4,7 +4,10 @@ import IosSearch from "../components/ios/IosSearch";
 import {
   Button,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
+  Input,
   LightMode,
   Spinner,
   useColorModeValue,
@@ -19,9 +22,30 @@ import { useIsLargeScreen } from "../utils/screenSize";
 import { StatWithIcon } from "../components/StatWithIcon";
 import { parseFromString, qualityAliases, typeAliases } from "./tpb";
 import Filters from "../components/Filters";
+import CategorySelect from "../components/CategorySelect";
+import { SectionSM } from "./yts";
 
 const PluginSearch = (props: SearchProviderComponentProps) => {
   const [searchId, setSearchId] = useState<number>();
+  const [addToCategory, setAddToCategory] = useState<string>("");
+  const [savePath, setSavePath] = useState<string>("");
+
+  const { data: categories } = useQuery(
+    "torrentsCategoryPlugin",
+    TorrClient.getCategories, {
+      staleTime: 10000
+    }
+  );
+
+  const handleCategorySelect = (categoryName: string) => {
+    setAddToCategory(categoryName);
+    if (categoryName && categories) {
+      const cat = Object.values(categories).find(c => c.name === categoryName);
+      setSavePath(cat?.savePath || "");
+    } else {
+      setSavePath("");
+    }
+  };
 
   const isLarge = useIsLargeScreen();
 
@@ -142,19 +166,43 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
         </Flex>
       )}
       {(!data?.results?.length || true) && <Filters {...props.filterState} />}
-      {filteredResults.map((result) => (
-        <TorrentDownloadBox
-          key={result.fileUrl}
-          magnetURL={result.fileUrl}
-          title={result.fileName}
-        >
-          <SeedsAndPeers
-            seeds={result.nbSeeders.toString()}
-            peers={result.nbLeechers.toString()}
-            size={result.fileSize}
-          />
-        </TorrentDownloadBox>
-      ))}
+      {data?.results && (
+        <>
+          <FormControl>
+            <FormLabel>Download Location</FormLabel>
+            <Input
+              value={savePath}
+              onChange={(e) => setSavePath(e.target.value)}
+              placeholder="Enter save path"
+            />
+          </FormControl>
+          <SectionSM
+            title={"Results"}
+            titleRight={
+              <CategorySelect
+                category={addToCategory}
+                onSelected={handleCategorySelect}
+              />
+            }
+          >
+            {filteredResults.map((result) => (
+              <TorrentDownloadBox
+                key={result.fileUrl}
+                magnetURL={result.fileUrl}
+                title={result.fileName}
+                category={addToCategory}
+                savePath={savePath}
+              >
+                <SeedsAndPeers
+                  seeds={result.nbSeeders.toString()}
+                  peers={result.nbLeechers.toString()}
+                  size={result.fileSize}
+                />
+              </TorrentDownloadBox>
+            ))}
+          </SectionSM>
+        </>
+      )}
     </VStack>
   );
 };

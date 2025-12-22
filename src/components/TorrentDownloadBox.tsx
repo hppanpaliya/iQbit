@@ -17,6 +17,7 @@ export interface TorrentDownloadBoxProps {
   magnetURL?: string;
   onSelect?: () => Promise<string>;
   category?: string;
+  savePath?: string;
 }
 
 const TorrentDownloadBox = ({
@@ -25,13 +26,14 @@ const TorrentDownloadBox = ({
   onSelect,
   children,
   category,
+  savePath,
 }: PropsWithChildren<TorrentDownloadBoxProps>) => {
   const isLarge = useIsLargeScreen();
   const queryClient = useQueryClient();
 
   const { mutate, isLoading, isSuccess } = useMutation(
     "addBox",
-    (magnetURLParam: string) => TorrClient.addTorrent("urls", magnetURLParam, category),
+    (magnetURLParam: string) => TorrClient.addTorrent("urls", magnetURLParam, category, savePath),
     {
       onSuccess: () => {
         // Invalidate torrent queries to show new torrent immediately

@@ -5,15 +5,18 @@ import {
   Box,
   Button,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
   HeadingProps,
+  Input,
   Text,
   useBoolean,
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
 import IosSearch from "../components/ios/IosSearch";
-import {useMutation} from "react-query";
+import {useMutation, useQuery} from "react-query";
 import { YTSClient } from "../utils/YTSClient";
 import { useNavigate, useParams } from "react-router-dom";
 import IosBottomSheet from "../components/ios/IosBottomSheet";
@@ -26,6 +29,7 @@ import Filters from "../components/Filters";
 import { InfoDataBox } from "../components/InfoDataBox";
 import ReactGA from "react-ga";
 import PosterGrid from "../components/PosterGrid";
+import {TorrClient} from "../utils/TorrClient";
 import CategorySelect from "../components/CategorySelect";
 
 export const useSearchFromParams = (callback: () => void) => {
@@ -143,6 +147,24 @@ const YTSSearch = (props: SearchProviderComponentProps) => {
   ]);
 
   const [addToCategory, setAddToCategory] = useState<string>("");
+  const [savePath, setSavePath] = useState<string>("");
+
+  const { data: categories } = useQuery(
+    "torrentsCategoryYTS",
+    TorrClient.getCategories, {
+      staleTime: 10000
+    }
+  );
+
+  const handleCategorySelect = (categoryName: string) => {
+    setAddToCategory(categoryName);
+    if (categoryName && categories) {
+      const cat = Object.values(categories).find(c => c.name === categoryName);
+      setSavePath(cat?.savePath || "");
+    } else {
+      setSavePath("");
+    }
+  };
 
   return (
     <VStack>
@@ -174,10 +196,18 @@ const YTSSearch = (props: SearchProviderComponentProps) => {
         modalProps={{ size: "xl", scrollBehavior: "inside" }}
       >
         <Flex flexDirection={"column"} gap={4}>
+          <FormControl>
+            <FormLabel>Download Location</FormLabel>
+            <Input
+              value={savePath}
+              onChange={(e) => setSavePath(e.target.value)}
+              placeholder="Enter save path"
+            />
+          </FormControl>
           <SectionSM title={"Torrents"}
             titleRight={
 
-              <CategorySelect category={addToCategory} onSelected={setAddToCategory} />
+              <CategorySelect category={addToCategory} onSelected={handleCategorySelect} />
             }
           >
             {(selectedMovie?.torrents || []).map((torrent) => {
@@ -191,6 +221,7 @@ const YTSSearch = (props: SearchProviderComponentProps) => {
                     })` || "Title not found"
                   )}
                   category={addToCategory}
+                  savePath={savePath}
                 >
                   <Flex flexDirection={"column"} width={"100%"}>
                     <TorrentMovieData

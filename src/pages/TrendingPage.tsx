@@ -3,6 +3,9 @@ import {
   Box,
   Button,
   Flex,
+  FormControl,
+  FormLabel,
+  Input,
   LightMode,
   Spinner,
   Text,
@@ -25,6 +28,7 @@ import { providers } from "./SearchPage";
 import { useNavigate } from "react-router-dom";
 import { SearchPluginsPageQuery } from "./SearchPluginsPage";
 import { TorrClient } from "../utils/TorrClient";
+import CategorySelect from "../components/CategorySelect";
 
 const smallImage = "http://image.tmdb.org/t/p/w200";
 const originalImage = "http://image.tmdb.org/t/p/original";
@@ -97,6 +101,26 @@ const TrendingPage = () => {
     SearchPluginsPageQuery,
     TorrClient.getInstalledPlugins
   );
+
+  const [addToCategory, setAddToCategory] = useState<string>("");
+  const [savePath, setSavePath] = useState<string>("");
+
+  const { data: categories } = useQuery(
+    "torrentsCategoryTrending",
+    TorrClient.getCategories, {
+      staleTime: 10000
+    }
+  );
+
+  const handleCategorySelect = (categoryName: string) => {
+    setAddToCategory(categoryName);
+    if (categoryName && categories) {
+      const cat = Object.values(categories).find(c => c.name === categoryName);
+      setSavePath(cat?.savePath || "");
+    } else {
+      setSavePath("");
+    }
+  };
 
   const bgColor = useColorModeValue("grayAlpha.200", "grayAlpha.400");
 
@@ -199,7 +223,23 @@ const TrendingPage = () => {
         disclosure={movieBottomSheet}
       >
         <Flex flexDirection={"column"} gap={4}>
-          <SectionSM title={"Download from YTS"}>
+          <FormControl>
+            <FormLabel>Download Location</FormLabel>
+            <Input
+              value={savePath}
+              onChange={(e) => setSavePath(e.target.value)}
+              placeholder="Enter save path"
+            />
+          </FormControl>
+          <SectionSM
+            title={"Download from YTS"}
+            titleRight={
+              <CategorySelect
+                category={addToCategory}
+                onSelected={handleCategorySelect}
+              />
+            }
+          >
             {torrsLoading ? (
               <Flex justifyContent={"center"} w={"full"}>
                 <Spinner color={"blue"} mt={3} />
@@ -265,6 +305,8 @@ const TrendingPage = () => {
                       TorrData?.movies[0].year || "--"
                     })` || "Title not found"
                   )}
+                  category={addToCategory}
+                  savePath={savePath}
                 >
                   <Flex flexDirection={"column"} width={"100%"}>
                     <TorrentMovieData
