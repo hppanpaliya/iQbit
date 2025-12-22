@@ -15,7 +15,9 @@ import {
   MenuItemOption,
   MenuList,
   MenuOptionGroup,
+  Select,
   Spinner,
+  Text,
   useColorModeValue,
   useDisclosure,
   VStack,
@@ -27,7 +29,9 @@ import SeedsAndPeers from "../components/SeedsAndPeers";
 import {
   IoArrowDown,
   IoArrowUp,
+  IoChevronBack,
   IoChevronDown,
+  IoChevronForward,
   IoClose,
   IoFilter,
   IoList,
@@ -49,6 +53,8 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
   const [selectedEngines, setSelectedEngines] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
 
   const sortDisclosure = useDisclosure();
 
@@ -236,6 +242,25 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
     sortOrder,
   ]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchId,
+    props.filterState.selectedSource,
+    props.filterState.minSeeds,
+    props.filterState.qualitySelected,
+    selectedEngines,
+    sortBy,
+    sortOrder,
+    itemsPerPage,
+  ]);
+
+  const pageCount = Math.ceil(filteredResults.length / itemsPerPage);
+  const currentResults = filteredResults.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const sortOptions = [
     { label: "None", onClick: () => setSortBy(""), checked: sortBy === "" },
     {
@@ -261,7 +286,7 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
   ];
 
   return (
-    <VStack spacing={4} alignItems="stretch" w="100%">
+    <VStack>
       <IosSearch
         value={props.searchState[0]}
         onChange={(e) => props.searchState[1](e.target.value)}
@@ -447,7 +472,7 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
             />
           }
         >
-          {filteredResults.map((result) => (
+          {currentResults.map((result) => (
             <TorrentDownloadBox
               key={result.fileUrl}
               magnetURL={result.fileUrl}
@@ -464,6 +489,59 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
               />
             </TorrentDownloadBox>
           ))}
+          {filteredResults.length > 0 && (
+            <Flex
+              justifyContent="space-between"
+              alignItems="center"
+              mt={4}
+              gap={4}
+              wrap="wrap"
+            >
+              {pageCount > 1 && (
+                <Flex alignItems="center" gap={2}>
+                  <Button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    isDisabled={currentPage === 1}
+                    size="sm"
+                    leftIcon={<IoChevronBack />}
+                  >
+                    Prev
+                  </Button>
+                  <Text fontSize="sm" whiteSpace="nowrap">
+                    Page {currentPage} of {pageCount}
+                  </Text>
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(pageCount, p + 1))
+                    }
+                    isDisabled={currentPage === pageCount}
+                    size="sm"
+                    rightIcon={<IoChevronForward />}
+                  >
+                    Next
+                  </Button>
+                </Flex>
+              )}
+              <Flex alignItems="center" gap={2}>
+                <Text fontSize="sm" whiteSpace="nowrap">
+                  Items per page:
+                </Text>
+                <Select
+                  size="sm"
+                  width="80px"
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  rounded="md"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </Select>
+              </Flex>
+            </Flex>
+          )}
         </SectionSM>
       )}
     </VStack>
