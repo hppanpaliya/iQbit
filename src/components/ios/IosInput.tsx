@@ -9,6 +9,7 @@ import {
 import { IoEye, IoEyeOff } from "react-icons/io5";
 
 export interface InputProps {
+  id?: string;
   label: string;
   labelWidth: number;
   first?: boolean;
@@ -48,6 +49,7 @@ const IosInput = (props: InputProps) => {
         {props.label}
       </InputLeftAddon>
       <Input
+        id={props.id}
         type={showTextInPassword ? "password" : "text"}
         autoCapitalize={"off"}
         value={props.value}

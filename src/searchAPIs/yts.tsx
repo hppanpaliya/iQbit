@@ -16,7 +16,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import IosSearch from "../components/ios/IosSearch";
-import {useMutation, useQuery} from "react-query";
+import {useMutation, useQuery} from "@tanstack/react-query";
 import { YTSClient } from "../utils/YTSClient";
 import { useNavigate, useParams } from "react-router-dom";
 import IosBottomSheet from "../components/ios/IosBottomSheet";
@@ -72,31 +72,29 @@ export const torrentBoxIconProps = {
 const YTSSearch = (props: SearchProviderComponentProps) => {
   const navigate = useNavigate();
 
-  const { mutate, data, isLoading } = useMutation(
-    "YTSsearch",
-    () =>
+  const { mutate, data, isPending: isLoading } = useMutation({
+    mutationKey: ["YTSsearch"],
+    mutationFn: () =>
       YTSClient.search({
         query_term: props.searchState[0],
         quality: props.filterState.qualitySelected,
       }),
-    {
-      onMutate: () => {
-        ReactGA.event({ action: "executed", category: "search", label: "YTS" });
-        navigate(`/search/${props.searchState[0]}`, { replace: true });
-      },
-      onSuccess: (data) => {
-        props.onSearch && props.onSearch();
+    onMutate: () => {
+      ReactGA.event({ action: "executed", category: "search", label: "YTS" });
+      navigate(`/search/${props.searchState[0]}`, { replace: true });
+    },
+    onSuccess: (data) => {
+      props.onSearch && props.onSearch();
 
-        let sourceList = new Set();
+      let sourceList = new Set();
 
-        data?.movies.forEach((movie) =>
-          movie.torrents.forEach((torr) => sourceList.add(torr.type))
-        );
+      data?.movies.forEach((movie) =>
+        movie.torrents.forEach((torr) => sourceList.add(torr.type))
+      );
 
-        props.filterState.setSourceList(Array.from(sourceList) as string[]);
-      },
-    }
-  );
+      props.filterState.setSourceList(Array.from(sourceList) as string[]);
+    },
+  });
 
   useEffect(() => {
     if (props.searchState[0]) {
@@ -149,12 +147,11 @@ const YTSSearch = (props: SearchProviderComponentProps) => {
   const [addToCategory, setAddToCategory] = useState<string>("");
   const [savePath, setSavePath] = useState<string>("");
 
-  const { data: categories } = useQuery(
-    "torrentsCategoryYTS",
-    TorrClient.getCategories, {
-      staleTime: 10000
-    }
-  );
+  const { data: categories } = useQuery({
+    queryKey: ["torrentsCategoryYTS"],
+    queryFn: TorrClient.getCategories,
+    staleTime: 10000,
+  });
 
   const handleCategorySelect = (categoryName: string) => {
     setAddToCategory(categoryName);

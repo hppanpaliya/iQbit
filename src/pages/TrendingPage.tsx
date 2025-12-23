@@ -13,7 +13,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import PageHeader from "../components/PageHeader";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { tmdbClient } from "../utils/tmdbClient";
 import PosterGrid from "../components/PosterGrid";
 import { MovieResult, TvResult } from "moviedb-promise";
@@ -49,68 +49,75 @@ const TrendingPage = () => {
   const [selectedMovie, setSelectedMovie] = useState<MovieResult>();
   const movieBottomSheet = useDisclosure();
   const browserLanguage = getBrowserLanguage();
-  const { data: trendingMovies } = useQuery("getTrendingMovies", async () =>
-    tmdbClient.trending({
-      media_type: "movie",
-      time_window: "day",
-      language: browserLanguage,
-    })
-  );
+  const { data: trendingMovies } = useQuery({
+    queryKey: ["getTrendingMovies"],
+    queryFn: async () =>
+      tmdbClient.trending({
+        media_type: "movie",
+        time_window: "day",
+        language: browserLanguage,
+      }),
+  });
 
   const [currentPage, setCurrentPage] = useState(1);
 
   const [topMoviesData, setTopMoviesData] = useState<MovieResult[]>([]);
 
-  const { refetch } = useQuery("getTopMovies", async () => {
-    const res = await tmdbClient.movieTopRated({
-      page: currentPage,
-    });
-    setCurrentPage(currentPage + 1);
-    setTopMoviesData([...topMoviesData, ...(res?.results ?? [])]);
-    return res;
+  const { refetch } = useQuery({
+    queryKey: ["getTopMovies"],
+    queryFn: async () => {
+      const res = await tmdbClient.movieTopRated({
+        page: currentPage,
+      });
+      setCurrentPage(currentPage + 1);
+      setTopMoviesData([...topMoviesData, ...(res?.results ?? [])]);
+      return res;
+    },
   });
 
   const handleLoadMore = async () => {
     const newPage = currentPage + 1;
     setCurrentPage(newPage);
-    let { data } = await refetch({ queryKey: `getTopMovies:${newPage}` });
+    let { data } = await refetch();
     setTopMoviesData([...topMoviesData, ...(data?.results ?? [])]);
   };
 
   const {
     data: TorrData,
     mutate: getTorrs,
-    isLoading: torrsLoading,
-  } = useMutation((search: string) =>
-    YTSClient.search({
-      query_term: search,
-    })
-  );
+    isPending: torrsLoading,
+  } = useMutation({
+    mutationFn: (search: string) =>
+      YTSClient.search({
+        query_term: search,
+      }),
+  });
 
   const tvBottomSheet = useDisclosure();
   const [selectedTv, setSelectedTv] = useState<TvResult>();
-  const { data: trendingTv } = useQuery("getTrendingTv", async () =>
-    tmdbClient.trending({
-      media_type: "tv",
-      time_window: "day",
-      language: browserLanguage,
-    })
-  );
+  const { data: trendingTv } = useQuery({
+    queryKey: ["getTrendingTv"],
+    queryFn: async () =>
+      tmdbClient.trending({
+        media_type: "tv",
+        time_window: "day",
+        language: browserLanguage,
+      }),
+  });
 
-  const { data: plugins } = useQuery(
-    SearchPluginsPageQuery,
-    TorrClient.getInstalledPlugins
-  );
+  const { data: plugins } = useQuery({
+    queryKey: [SearchPluginsPageQuery],
+    queryFn: TorrClient.getInstalledPlugins,
+  });
 
   const [addToCategory, setAddToCategory] = useState<string>("");
   const [savePath, setSavePath] = useState<string>("");
 
-  const { data: categories } = useQuery(
-    "torrentsCategoryTrending",
-    TorrClient.getCategories, {
-      staleTime: 10000
-    }
-  );
+  const { data: categories } = useQuery({
+    queryKey: ["torrentsCategoryTrending"],
+    queryFn: TorrClient.getCategories,
+    staleTime: 10000,
+  });
 
   const handleCategorySelect = (categoryName: string) => {
     setAddToCategory(categoryName);

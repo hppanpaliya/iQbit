@@ -1,5 +1,5 @@
 import React from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getAnnouncements } from "../AnnouncementChecker";
 import {
   Alert,
@@ -12,7 +12,10 @@ import {
 } from "@chakra-ui/react";
 
 const AllAnnouncementsPage = () => {
-  const { data, isLoading } = useQuery("getAllAnnouncements", getAnnouncements);
+  const { data, isLoading } = useQuery({
+    queryKey: ["getAllAnnouncements"],
+    queryFn: getAnnouncements,
+  });
 
   if (isLoading) {
     return (

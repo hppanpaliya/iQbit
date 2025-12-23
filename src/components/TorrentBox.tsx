@@ -37,7 +37,7 @@ import {
   IoSpeedometer,
 } from "react-icons/io5";
 import { StatWithIcon } from "./StatWithIcon";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TorrClient } from "../utils/TorrClient";
 import IosActionSheet from "./ios/IosActionSheet";
 import IosBottomSheet from "./ios/IosBottomSheet";
@@ -116,172 +116,176 @@ const TorrentBox = ({
     torrentData.auto_tmm,
   ]);
 
-  const { mutate: pause } = useMutation(
-    "pauseTorrent",
-    () => TorrClient.pause(hash),
-    {
-      onMutate: () => setWaiting("mainBtn"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const queryClient = useQueryClient();
 
-  const { mutate: resume } = useMutation(
-    "resumeTorrent",
-    () => TorrClient.resume(hash),
-    {
-      onMutate: () => setWaiting("mainBtn"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const { mutate: pause } = useMutation({
+    mutationKey: ["pauseTorrent"],
+    mutationFn: () => TorrClient.pause(hash),
+    onMutate: () => setWaiting("mainBtn"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
+
+  const { mutate: resume } = useMutation({
+    mutationKey: ["resumeTorrent"],
+    mutationFn: () => TorrClient.resume(hash),
+    onMutate: () => setWaiting("mainBtn"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
   const deleteConfirmationDisclosure = useDisclosure();
-  const { mutate: remove } = useMutation(
-    "deleteTorrent",
-    (deleteFiles: boolean) => TorrClient.remove(hash, deleteFiles),
-    {
-      onMutate: () => setWaiting("mainBtn"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const { mutate: remove } = useMutation({
+    mutationKey: ["deleteTorrent"],
+    mutationFn: (deleteFiles: boolean) => TorrClient.remove(hash, deleteFiles),
+    onMutate: () => setWaiting("mainBtn"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
   const categoryChangeDisclosure = useDisclosure();
-  const { mutate: changeCategory } = useMutation(
-    "changeCategory",
-    (category: string) => TorrClient.setTorrentCategory(hash, category),
-    {
-      onMutate: () => setWaiting("category"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const { mutate: changeCategory } = useMutation({
+    mutationKey: ["changeCategory"],
+    mutationFn: (category: string) => TorrClient.setTorrentCategory(hash, category),
+    onMutate: () => setWaiting("category"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
   const [newName, setNewName] = useState(torrentData.name);
   const renameTorrentDisclosure = useDisclosure();
-  const { mutate: renameTorrent, isLoading: renameLoading } = useMutation(
-    "changeCategory",
-    () => TorrClient.renameTorrent(hash, newName),
-    {
-      onMutate: () => setWaiting("name"),
-      onError: () => setWaiting(""),
-      onSuccess: () => renameTorrentDisclosure.onClose(),
-    }
-  );
+  const { mutate: renameTorrent, isPending: renameLoading } = useMutation({
+    mutationKey: ["changeCategory"],
+    mutationFn: () => TorrClient.renameTorrent(hash, newName),
+    onMutate: () => setWaiting("name"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      renameTorrentDisclosure.onClose();
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
-  const { mutate: toggleSequentialDownload } = useMutation(
-    "sequential-download",
-    () => TorrClient.toggleSequentialDownload(hash),
-    {
-      onMutate: () => setWaiting("sequential"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const { mutate: toggleSequentialDownload } = useMutation({
+    mutationKey: ["sequential-download"],
+    mutationFn: () => TorrClient.toggleSequentialDownload(hash),
+    onMutate: () => setWaiting("sequential"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
-  const { mutate: toggleFirstLastPiecePrio } = useMutation(
-    "first-last-priority",
-    () => TorrClient.toggleFirstLastPiecePrio(hash),
-    {
-      onMutate: () => setWaiting("firstLastPriority"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const { mutate: toggleFirstLastPiecePrio } = useMutation({
+    mutationKey: ["first-last-priority"],
+    mutationFn: () => TorrClient.toggleFirstLastPiecePrio(hash),
+    onMutate: () => setWaiting("firstLastPriority"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
-  const { mutate: toggleAutoManagement } = useMutation(
-    "first-last-priority",
-    async () => {
+  const { mutate: toggleAutoManagement } = useMutation({
+    mutationKey: ["first-last-priority"],
+    mutationFn: async () => {
       return TorrClient.setAutoManagement(
         hash,
         (!torrentData.auto_tmm).toString()
       );
     },
-    {
-      onMutate: () => setWaiting("autoManagement"),
-      onError: () => setWaiting(""),
-    }
-  );
+    onMutate: () => setWaiting("autoManagement"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
-  const { mutate: recheck } = useMutation(
-    "recheck",
-    () => TorrClient.recheck(hash),
-    {
-      onMutate: () => setWaiting("recheck"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const { mutate: recheck } = useMutation({
+    mutationKey: ["recheck"],
+    mutationFn: () => TorrClient.recheck(hash),
+    onMutate: () => setWaiting("recheck"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
-  const { mutate: reannounce } = useMutation(
-    "reannounce",
-    () => TorrClient.reannounce(hash),
-    {
-      onMutate: () => setWaiting("reannounce"),
-      onError: () => setWaiting(""),
-    }
-  );
+  const { mutate: reannounce } = useMutation({
+    mutationKey: ["reannounce"],
+    mutationFn: () => TorrClient.reannounce(hash),
+    onMutate: () => setWaiting("reannounce"),
+    onError: () => setWaiting(""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
+    },
+  });
 
   const TorrentInformationDisclosure = useDisclosure();
 
   const moveDisclosure = useDisclosure();
   const [newLocation, setNewLocation] = useState("");
   const [moveFiles, setMoveFiles] = useState(true);
-  const { mutate: setLocationMutation, isLoading: locationLoading } = useMutation(
-    "setLocation",
-    () => TorrClient.setLocation(hash, newLocation, moveFiles),
-    {
-      onMutate: () => setWaiting("location"),
-      onError: () => setWaiting(""),
-      onSuccess: () => moveDisclosure.onClose(),
-    }
-  );
+  const { mutate: setLocationMutation, isPending: locationLoading } = useMutation({
+    mutationKey: ["setLocation"],
+    mutationFn: () => TorrClient.setLocation(hash, newLocation, moveFiles),
+    onMutate: () => setWaiting("location"),
+    onError: () => setWaiting(""),
+    onSuccess: () => moveDisclosure.onClose(),
+  });
 
   const setDownloadLimitDisclosure = useDisclosure();
   const [downloadLimit, setDownloadLimit] = useState("");
-  const { mutate: setDownloadLimitMutation, isLoading: downloadLimitLoading } = useMutation(
-    "setDownloadLimit",
-    () => TorrClient.setDownloadLimit(hash, downloadLimit),
-    {
-      onMutate: () => setWaiting("downloadLimit"),
-      onError: () => setWaiting(""),
-      onSuccess: () => setDownloadLimitDisclosure.onClose(),
-    }
-  );
+  const { mutate: setDownloadLimitMutation, isPending: downloadLimitLoading } = useMutation({
+    mutationKey: ["setDownloadLimit"],
+    mutationFn: () => TorrClient.setDownloadLimit(hash, downloadLimit),
+    onMutate: () => setWaiting("downloadLimit"),
+    onError: () => setWaiting(""),
+    onSuccess: () => setDownloadLimitDisclosure.onClose(),
+  });
 
   const setUploadLimitDisclosure = useDisclosure();
   const [uploadLimit, setUploadLimit] = useState("");
-  const { mutate: setUploadLimitMutation, isLoading: uploadLimitLoading } = useMutation(
-    "setUploadLimit",
-    () => TorrClient.setUploadLimit(hash, uploadLimit),
-    {
-      onMutate: () => setWaiting("uploadLimit"),
-      onError: () => setWaiting(""),
-      onSuccess: () => setUploadLimitDisclosure.onClose(),
-    }
-  );
+  const { mutate: setUploadLimitMutation, isPending: uploadLimitLoading } = useMutation({
+    mutationKey: ["setUploadLimit"],
+    mutationFn: () => TorrClient.setUploadLimit(hash, uploadLimit),
+    onMutate: () => setWaiting("uploadLimit"),
+    onError: () => setWaiting(""),
+    onSuccess: () => setUploadLimitDisclosure.onClose(),
+  });
 
   // File operations
   const filesDisclosure = useDisclosure();
-  const { data: torrentFiles = [], isLoading: filesLoading } = useQuery(
-    ["torrentFiles", hash],
-    () => TorrClient.getTorrentContents(hash),
-    {
-      enabled: filesDisclosure.isOpen,
-      refetchInterval: filesDisclosure.isOpen ? 5000 : false,
-    }
-  );
+  const { data: torrentFiles = [], isLoading: filesLoading } = useQuery({
+    queryKey: ["torrentFiles", hash],
+    queryFn: () => TorrClient.getTorrentContents(hash),
+    enabled: filesDisclosure.isOpen,
+    refetchInterval: filesDisclosure.isOpen ? 5000 : false,
+  });
 
-  const { mutate: setFilePriority } = useMutation(
-    "setFilePriority",
-    ({ fileIndex, priority }: { fileIndex: number; priority: TorrFilePriority }) =>
-      TorrClient.setFilePriority(hash, fileIndex, priority)
-  );
+  const { mutate: setFilePriority } = useMutation({
+    mutationKey: ["setFilePriority"],
+    mutationFn: ({ fileIndex, priority }: { fileIndex: number; priority: TorrFilePriority }) =>
+      TorrClient.setFilePriority(hash, fileIndex, priority),
+  });
 
-  const { mutate: setFilePriorities } = useMutation(
-    "setFilePriorities",
-    ({
+  const { mutate: setFilePriorities } = useMutation({
+    mutationKey: ["setFilePriorities"],
+    mutationFn: ({
       fileIndices,
       priority,
     }: {
       fileIndices: number[];
       priority: TorrFilePriority;
-    }) => TorrClient.setFilePriorities(hash, fileIndices, priority)
-  );
+    }) => TorrClient.setFilePriorities(hash, fileIndices, priority),
+  });
 
   const actionSheetDisclosure = useDisclosure();
 

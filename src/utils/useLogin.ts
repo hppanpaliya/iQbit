@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { useMutation } from "react-query";
+import { useMutation } from "@tanstack/react-query";
 import { TorrClient } from "./TorrClient";
 
 export const CredsLocalStorageKey = "iqbit_creds";
@@ -15,34 +15,32 @@ export const useLogin = (props?: { onLogin?: () => void }) => {
     password: "",
   });
 
-  const { mutate: handleLogin } = useMutation(
-    loginPOSTKey,
-    ({ username, password }: { username: string; password: string }) =>
+  const { mutate: handleLogin } = useMutation({
+    mutationKey: [loginPOSTKey],
+    mutationFn: ({ username, password }: { username: string; password: string }) =>
       TorrClient.login({ username, password }),
-    {
-      onSuccess: ({ data }, { username, password }) => {
-        if (data === "Ok.") {
-          setLocalCreds({
-            username,
-            password,
-          });
-          props?.onLogin && props?.onLogin();
-        } else {
-          setFormError("Login Unauthorized");
-        }
-      },
-      onError: ({ message }) => {
-        setFormError(message);
-        if (!retryAttempt && localCreds.username && localCreds.password) {
-          setRetryAttempt(true);
-          handleLogin({
-            username: localCreds.username,
-            password: localCreds.password,
-          });
-        }
-      },
-    }
-  );
+    onSuccess: ({ data }, { username, password }) => {
+      if (data === "Ok.") {
+        setLocalCreds({
+          username,
+          password,
+        });
+        props?.onLogin && props?.onLogin();
+      } else {
+        setFormError("Login Unauthorized");
+      }
+    },
+    onError: ({ message }: any) => {
+      setFormError(message);
+      if (!retryAttempt && localCreds.username && localCreds.password) {
+        setRetryAttempt(true);
+        handleLogin({
+          username: localCreds.username,
+          password: localCreds.password,
+        });
+      }
+    },
+  });
 
   return {
     formError,

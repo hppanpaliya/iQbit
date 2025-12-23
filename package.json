@@ -8,17 +8,17 @@
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
     "@jridgewell/gen-mapping": "0.3.5",
+    "@tanstack/react-query": "^5.0.0",
     "@types/fuzzyset.js": "^0.0.2",
     "@types/jest": "^27.0.1",
     "@types/js-cookie": "^3.0.1",
-    "@types/node": "^16.7.13",
-    "@types/react": "18.0.15",
-    "@types/react-dom": "18.0.6",
+    "@types/node": "^22.12.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
     "ajv": "^8.16.0",
     "axios": "^1.6.5",
     "cors": "^2.8.5",
     "eslint": "^8.11.0",
-    "eslint-plugin-react": "^7.30.1",
     "express": "^4.18.1",
     "filesize": "^9.0.11",
     "framer-motion": "^6",
@@ -34,11 +34,9 @@
     "react-dom": "18.2.0",
     "react-ga": "^3.3.1",
     "react-icons": "^4.3.1",
-    "react-query": "^3.39.3",
     "react-router-dom": "^6.2.2",
-    "react-scripts": "5.0.0",
     "react-virtualized": "^9.22.6",
-    "typescript": "^4.4.2",
+    "typescript": "^5.0.0",
     "usehooks-ts": "^2.4.2",
     "web-vitals": "^2.1.0"
   },
@@ -55,17 +53,24 @@
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest",
-      "plugin:react/recommended"
+      "eslint:recommended",
+      "plugin:react/recommended",
+      "plugin:@typescript-eslint/recommended"
     ],
     "rules": {
-      "react/react-in-jsx-scope": [
-        0
-      ],
-      "react/no-unescaped-entities": [
-        0
-      ]
+      "react/react-in-jsx-scope": "off",
+      "react/no-unescaped-entities": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "prefer-const": "off"
+    },
+    "settings": {
+      "react": {
+        "version": "detect"
+      }
     }
   },
   "browserslist": {
@@ -80,14 +85,19 @@
       "last 1 safari version"
     ]
   },
-  "resolutions": {
-    "@types/react": "18.0.7",
-    "@types/react-dom": "18.0.6"
-  },
   "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/eslint-parser": "^7.28.5",
     "@types/react-virtualized": "^9.21.21",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-react": "^4.7.0",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "vite": "^7.0.6"
   }
 }

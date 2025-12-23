@@ -16,7 +16,7 @@ import {
   useDisclosure,
   UseDisclosureReturn,
 } from "@chakra-ui/react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TorrClient } from "../utils/TorrClient";
 import { useIsLargeScreen } from "../utils/screenSize";
 import IosActionSheet from "../components/ios/IosActionSheet";
@@ -33,29 +33,29 @@ const SearchPlugin = ({ plugin }: { plugin: TorrPlugin }) => {
 
   const queryClient = useQueryClient();
 
-  const { mutate: toggleEnable } = useMutation(
-    "enablePluginToggle",
-    () => TorrClient.togglePluginEnabled(plugin.name, !plugin.enabled),
-    {
-      onSuccess: () => {
-        setTimeout(async () => {
-          await queryClient.invalidateQueries(SearchPluginsPageQuery);
-        }, 500);
-      },
-    }
-  );
+  const { mutate: toggleEnable } = useMutation({
+    mutationKey: ["enablePluginToggle"],
+    mutationFn: () => TorrClient.togglePluginEnabled(plugin.name, !plugin.enabled),
+    onSuccess: () => {
+      setTimeout(async () => {
+        await queryClient.invalidateQueries({
+          queryKey: [SearchPluginsPageQuery],
+        });
+      }, 500);
+    },
+  });
 
-  const { mutate: uninstall } = useMutation(
-    "uninstallPlugin",
-    () => TorrClient.uninstallPlugin(plugin.name),
-    {
-      onSuccess: () => {
-        setTimeout(async () => {
-          await queryClient.invalidateQueries(SearchPluginsPageQuery);
-        }, 500);
-      },
-    }
-  );
+  const { mutate: uninstall } = useMutation({
+    mutationKey: ["uninstallPlugin"],
+    mutationFn: () => TorrClient.uninstallPlugin(plugin.name),
+    onSuccess: () => {
+      setTimeout(async () => {
+        await queryClient.invalidateQueries({
+          queryKey: [SearchPluginsPageQuery],
+        });
+      }, 500);
+    },
+  });
 
   const isLarge = useIsLargeScreen();
   const backgroundColor = useColorModeValue(
@@ -134,15 +134,15 @@ const PublicPlugin = ({
 }) => {
   const queryClient = useQueryClient();
 
-  const { mutate: addPlugin, isLoading: addLoading } = useMutation(
-    (path: string) => TorrClient.installPlugin(path),
-    {
-      onSuccess: (res, path) => {
-        onSuccess(path);
-        return queryClient.invalidateQueries(SearchPluginsPageQuery);
-      },
-    }
-  );
+  const { mutate: addPlugin, isPending: addLoading } = useMutation({
+    mutationFn: (path: string) => TorrClient.installPlugin(path),
+    onSuccess: (res, path) => {
+      onSuccess(path);
+      return queryClient.invalidateQueries({
+        queryKey: [SearchPluginsPageQuery],
+      });
+    },
+  });
 
   return (
     <Box p={4} borderColor={"grayAlpha.400"} borderWidth={1} rounded={5}>
@@ -222,32 +222,33 @@ export function MobileSettingsAddButton(props: {
 }
 
 const SearchPluginsPage = () => {
-  const { data, refetch } = useQuery(
-    SearchPluginsPageQuery,
-    TorrClient.getInstalledPlugins
-  );
+  const { data, refetch } = useQuery({
+    queryKey: [SearchPluginsPageQuery],
+    queryFn: TorrClient.getInstalledPlugins,
+  });
 
   const [pluginLocation, setPluginLocation] = useState("");
   const [added, setAdded] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("Name");
   const [sortAscending, setSortAscending] = useState(true);
 
-  const { data: publicPlugins } = useQuery("getPublicPlugins", async () => {
-    const { data } = await axios.get<TorrPublicPlugin[]>(
-      "https://iqbit.app/api/plugins"
-    );
-    return data;
+  const { data: publicPlugins } = useQuery({
+    queryKey: ["getPublicPlugins"],
+    queryFn: async () => {
+      const { data } = await axios.get<TorrPublicPlugin[]>(
+        "https://iqbit.app/api/plugins"
+      );
+      return data;
+    },
   });
 
-  const { mutate: addPlugin, isLoading: addLoading } = useMutation(
-    () => TorrClient.installPlugin(pluginLocation),
-    {
-      onSuccess: () => {
-        setAdded((curr) => [...curr, pluginLocation]);
-        return refetch();
-      },
-    }
-  );
+  const { mutate: addPlugin, isPending: addLoading } = useMutation({
+    mutationFn: () => TorrClient.installPlugin(pluginLocation),
+    onSuccess: () => {
+      setAdded((curr) => [...curr, pluginLocation]);
+      return refetch();
+    },
+  });
 
   const addPluginDisclosure = useDisclosure();
   const publicPluginsDisclosure = useDisclosure();

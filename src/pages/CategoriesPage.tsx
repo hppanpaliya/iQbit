@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PageHeader from "../components/PageHeader";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { TorrClient } from "../utils/TorrClient";
 import {
   Button,
@@ -25,17 +25,20 @@ import { useLocation } from "react-router-dom";
 import { Pages } from "../Pages";
 
 const CategoriesPage = () => {
-  const { data, refetch } = useQuery(
-    "getCategoriesPage",
-    TorrClient.getCategories
-  );
+  const { data, refetch } = useQuery({
+    queryKey: ["getCategoriesPage"],
+    queryFn: TorrClient.getCategories,
+  });
 
   const location = useLocation();
   const isPage =
     location.pathname ===
     Pages.find((page) => page.label === "Categories")?.url;
 
-  const { data: settings } = useQuery("settings", TorrClient.getSettings);
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: TorrClient.getSettings,
+  });
 
   const editDisclosure = useDisclosure();
 
@@ -61,9 +64,9 @@ const CategoriesPage = () => {
     });
   };
 
-  const { mutate: saveCategory, isLoading: saveCategoryLoading } = useMutation(
-    "addEditCategory",
-    async () => {
+  const { mutate: saveCategory, isPending: saveCategoryLoading } = useMutation({
+    mutationKey: ["addEditCategory"],
+    mutationFn: async () => {
       if (selectedCategory.mode === "Add") {
         await TorrClient.addCategory(
           selectedCategory.cat.name,
@@ -76,16 +79,16 @@ const CategoriesPage = () => {
         );
       }
     },
-    {
-      onSuccess: async () => {
-        await refetch();
-        editDisclosure.onClose();
-      },
-    }
-  );
+    onSuccess: async () => {
+      await refetch();
+      editDisclosure.onClose();
+    },
+  });
 
-  const { mutate: removeCategory, isLoading: removeCategoryLoading } =
-    useMutation("removeCategory", TorrClient.removeCategories, {
+  const { mutate: removeCategory, isPending: removeCategoryLoading } =
+    useMutation({
+      mutationKey: ["removeCategory"],
+      mutationFn: TorrClient.removeCategories,
       onSuccess: async () => {
         await refetch();
         editDisclosure.onClose();

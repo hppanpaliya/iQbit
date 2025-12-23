@@ -1,7 +1,7 @@
 import { SearchProviderComponentProps, TPBRecord } from "../types";
 import { Flex, FormControl, FormLabel, Input, VStack } from "@chakra-ui/react";
 import IosSearch from "../components/ios/IosSearch";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import TorrentDownloadBox from "../components/TorrentDownloadBox";
 import { SectionSM, useSearchFromParams } from "./yts";
@@ -80,10 +80,10 @@ const TPBSearch = (props: SearchProviderComponentProps) => {
     mutate: search,
     reset,
     data,
-    isLoading,
-  } = useMutation(
-    "tpbSearch",
-    async () => {
+    isPending: isLoading,
+  } = useMutation({
+    mutationKey: ["tpbSearch"],
+    mutationFn: async () => {
       const { data } = await axios.get<TPBRecord[]>(
         `${ApiDomain}api/tpb/search`,
         {
@@ -95,23 +95,21 @@ const TPBSearch = (props: SearchProviderComponentProps) => {
       );
       return data;
     },
-    {
-      onMutate: () =>
-        ReactGA.event({ action: "executed", category: "search", label: "TPB" }),
-      onSuccess: (data) => {
-        props.onSearch && props.onSearch();
+    onMutate: () =>
+      ReactGA.event({ action: "executed", category: "search", label: "TPB" }),
+    onSuccess: (data) => {
+      props.onSearch && props.onSearch();
 
-        let sourceList = new Set();
+      let sourceList = new Set();
 
-        data.forEach((torr) => {
-          const type = parseFromString(torr.name, typeAliases);
-          sourceList.add(type);
-        });
+      data.forEach((torr) => {
+        const type = parseFromString(torr.name, typeAliases);
+        sourceList.add(type);
+      });
 
-        props.filterState.setSourceList(Array.from(sourceList) as string[]);
-      },
-    }
-  );
+      props.filterState.setSourceList(Array.from(sourceList) as string[]);
+    },
+  });
 
   useSearchFromParams(search);
 
@@ -157,7 +155,9 @@ const TPBSearch = (props: SearchProviderComponentProps) => {
   const [addToCategory, setAddToCategory] = useState<string>("");
   const [savePath, setSavePath] = useState<string>("");
 
-  const { data: categories } = useQuery("torrentsCategoryTPB", TorrClient.getCategories, {
+  const { data: categories } = useQuery({
+    queryKey: ["torrentsCategoryTPB"],
+    queryFn: TorrClient.getCategories,
     staleTime: 10000,
   });
 

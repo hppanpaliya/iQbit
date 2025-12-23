@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from "react";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useToast } from "@chakra-ui/react";
 import { useLocalStorage } from "usehooks-ts";
@@ -34,8 +34,13 @@ const AnnouncementChecker = ({ children }: PropsWithChildren<{}>) => {
     marginBottom: isLarge ? 10 : 24,
   };
 
-  useQuery("getAnnouncements", getAnnouncements, {
-    onSuccess: (data) => {
+  const { data } = useQuery({
+    queryKey: ["getAnnouncements"],
+    queryFn: getAnnouncements,
+  });
+
+  React.useEffect(() => {
+    if (data) {
       const newUserToast = data?.announcements.find((item) => item.newUser);
       const lastToast = data?.announcements[0];
 
@@ -63,8 +68,8 @@ const AnnouncementChecker = ({ children }: PropsWithChildren<{}>) => {
           containerStyle,
         });
       }
-    },
-  });
+    }
+  }, [data, announce, toast, setAnnounce, containerStyle]);
 
   return <>{children}</>;
 };

@@ -19,9 +19,9 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { IoDocumentAttach, IoPause, IoPlay, IoClose, IoTrash } from "react-icons/io5";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { TorrClient } from "../utils/TorrClient";
-import { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import TorrentBox from "../components/TorrentBox";
 import { TorrTorrentInfo } from "../types";
 import IosBottomSheet from "../components/ios/IosBottomSheet";
@@ -32,18 +32,32 @@ import { FilterHeading } from "../components/Filters";
 import stateDictionary from "../utils/StateDictionary";
 import { useLocalStorage } from "usehooks-ts";
 import { useFontSizeContext } from "../components/FontSizeProvider";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 
 import { List, WindowScroller } from "react-virtualized";
 
 const Home = () => {
   const queryClient = useQueryClient();
   
-  const { mutate: resumeAll } = useMutation("resumeAll", TorrClient.resumeAll);
+  const { mutate: resumeAll } = useMutation({
+    mutationKey: ["resumeAll"],
+    mutationFn: TorrClient.resumeAll,
+    onSuccess: () => {
+      forceFullUpdate();
+    },
+  });
 
-  const { mutate: pauseAll } = useMutation("resumeAll", TorrClient.pauseAll);
+  const { mutate: pauseAll } = useMutation({
+    mutationKey: ["pauseAll"],
+    mutationFn: TorrClient.pauseAll,
+    onSuccess: () => {
+      forceFullUpdate();
+    },
+  });
 
-  const [rid, setRid] = useState(0);
+  const [syncVersion, setSyncVersion] = useState(0);
+  const ridRef = useRef(0);
 
   const [torrentsTx, setTorrentsTx] = useState<{
     [i: string]: TorrTorrentInfo;
@@ -51,6 +65,11 @@ const Home = () => {
 
   const [removedTorrs, setRemovedTorrs] = useState<string[]>([]);
   const [selectedTorrents, setSelectedTorrents] = useState<string[]>([]);
+
+  const forceFullUpdate = () => {
+    ridRef.current = 0;
+    setSyncVersion((v) => v + 1);
+  };
 
   const toggleSelection = (hash: string) => {
     setSelectedTorrents((prev) => {
@@ -63,96 +82,95 @@ const Home = () => {
   };
 
   const deleteMultipleDisclosure = useDisclosure();
-  const { mutate: removeMultiple } = useMutation(
-    "deleteMultipleTorrents",
-    async (deleteFiles: boolean) => {
+  const { mutate: removeMultiple } = useMutation({
+    mutationKey: ["deleteMultipleTorrents"],
+    mutationFn: async (deleteFiles: boolean) => {
       await Promise.all(
         selectedTorrents.map((hash) => TorrClient.remove(hash, deleteFiles))
       );
     },
-    {
-      onSuccess: () => {
-        setSelectedTorrents([]);
-        deleteMultipleDisclosure.onClose();
-        queryClient.invalidateQueries("torrentsTxData");
-      },
-    }
-  );
+    onSuccess: () => {
+      setSelectedTorrents([]);
+      deleteMultipleDisclosure.onClose();
+      forceFullUpdate();
+    },
+  });
 
-  const { mutate: pauseMultiple } = useMutation(
-    "pauseMultipleTorrents",
-    async () => {
+  const { mutate: pauseMultiple } = useMutation({
+    mutationKey: ["pauseMultipleTorrents"],
+    mutationFn: async () => {
       await Promise.all(
         selectedTorrents.map((hash) => TorrClient.pause(hash))
       );
     },
-    {
-      onSuccess: () => {
-        setSelectedTorrents([]);
-        queryClient.invalidateQueries("torrentsTxData");
-      },
-    }
-  );
+    onSuccess: () => {
+      setSelectedTorrents([]);
+      forceFullUpdate();
+    },
+  });
 
-  const { mutate: resumeMultiple } = useMutation(
-    "resumeMultipleTorrents",
-    async () => {
+  const { mutate: resumeMultiple } = useMutation({
+    mutationKey: ["resumeMultipleTorrents"],
+    mutationFn: async () => {
       await Promise.all(
         selectedTorrents.map((hash) => TorrClient.resume(hash))
       );
     },
-    {
-      onSuccess: () => {
-        setSelectedTorrents([]);
-        queryClient.invalidateQueries("torrentsTxData");
-      },
-    }
-  );
+    onSuccess: () => {
+      setSelectedTorrents([]);
+      forceFullUpdate();
+    },
+  });
 
-  const { data: categories } = useQuery(
-    "torrentsCategory",
-    TorrClient.getCategories
-  );
+  const { data: categories } = useQuery({
+    queryKey: ["torrentsCategory"],
+    queryFn: TorrClient.getCategories,
+  });
 
-  const { isLoading } = useQuery(
-    "torrentsTxData",
-    () => TorrClient.sync(rid),
-    {
-      refetchInterval: 1000,
-      refetchOnWindowFocus: false,
-      async onSuccess(data) {
-        setRid(data.rid);
-        setRemovedTorrs((curr) => [...curr, ...(data.torrents_removed || [])]);
+  const { data: torrentsData, isLoading } = useQuery({
+    queryKey: ["torrentsTxData", syncVersion],
+    queryFn: () => TorrClient.sync(ridRef.current),
+    refetchInterval: 1000,
+    refetchOnWindowFocus: false,
+  });
 
-        if (data.full_update) {
-          // await refetch();
-          setTorrentsTx(data.torrents as any);
-        } else {
-          if (!data.torrents) return;
+  React.useEffect(() => {
+    if (torrentsData) {
+      const data = torrentsData;
+      ridRef.current = data.rid;
 
-          Object.entries(data.torrents).forEach(([hash, info]) => {
-            Object.entries(info).forEach(([key, val]) => {
-              setTorrentsTx((curr) => {
-                const newObject = {
-                  ...curr,
-                  [hash]: {
-                    ...curr[hash],
-                    [key]: val,
-                  },
-                };
+      if (data.full_update) {
+        setRemovedTorrs([]);
+        setTorrentsTx(data.torrents || {});
+      } else {
+        if (!data.torrents && !data.torrents_removed) return;
 
-                if ((data.torrents_removed || []).includes(hash)) {
-                  delete newObject[hash];
-                }
-
-                return newObject;
-              });
-            });
-          });
+        if (data.torrents_removed) {
+          setRemovedTorrs((curr) => [...curr, ...data.torrents_removed]);
         }
-      },
+
+        setTorrentsTx((curr) => {
+          const newObject = { ...curr };
+          if (data.torrents) {
+            Object.entries(data.torrents).forEach(([hash, info]) => {
+              newObject[hash] = {
+                ...newObject[hash],
+                ...info,
+              };
+            });
+          }
+
+          if (data.torrents_removed) {
+            data.torrents_removed.forEach((hash) => {
+              delete newObject[hash];
+            });
+          }
+
+          return newObject;
+        });
+      }
     }
-  );
+  }, [torrentsData]);
 
   const addModalDisclosure = useDisclosure();
   const [textArea, setTextArea] = useState("");
@@ -167,11 +185,11 @@ const Home = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [draggingOver, setDraggingOver] = useState(false);
 
-  const { data: settings } = useQuery(
-    "settings-mainpage",
-    TorrClient.getSettings,
-    { refetchInterval: 30000 }
-  );
+  const { data: settings } = useQuery({
+    queryKey: ["settings-mainpage"],
+    queryFn: TorrClient.getSettings,
+    refetchInterval: 30000,
+  });
 
   const validateAndSelectFiles = (fileList: FileList) => {
     let validFiles: File[] = [];
@@ -190,9 +208,9 @@ const Home = () => {
     setDraggingOver(false);
   };
 
-  const { mutate: attemptAddTorrent, isLoading: attemptAddLoading } = useMutation(
-    async (opts: { autoTmm?: boolean, payload?: string | File | File[], downloadFolder?: string, category?: string }) => {
-      if (!!textArea) {
+  const { mutate: attemptAddTorrent, isPending: attemptAddLoading } = useMutation({
+    mutationFn: async (opts: { autoTmm?: boolean, payload?: string | File | File[], downloadFolder?: string, category?: string }) => {
+      if (textArea) {
         return await TorrClient.addTorrent("urls", textArea, opts.category, opts.downloadFolder);
       } else {
         if (Array.isArray(opts.payload)) {
@@ -202,20 +220,18 @@ const Home = () => {
         }
       }
     },
-    { 
-      onSuccess: () => {
-        // Clear form
-        setTextArea("");
-        setFiles([]);
-        setSelectedCategory("");
-        setDownloadFolder("");
-        
-        addModalDisclosure.onClose();
-        // Invalidate the sync query to force a full update and show new torrent immediately
-        queryClient.invalidateQueries("torrentsTxData");
-      }
-    }
-  );
+    onSuccess: () => {
+      // Clear form
+      setTextArea("");
+      setFiles([]);
+      setSelectedCategory("");
+      setDownloadFolder("");
+      
+      addModalDisclosure.onClose();
+      // Reset rid to 0 to force a full sync and show new torrent immediately
+      forceFullUpdate();
+    },
+  });
 
   const filterDisclosure = useDisclosure();
   const [filterSearch, setFilterSearch] = useLocalStorage(
@@ -250,20 +266,22 @@ const Home = () => {
   }, [filterCategory, filterSearch, filterStatus]);
 
   const Torrents = useMemo(() => {
-    if (torrentsTx === undefined) {
+    if (!torrentsTx) {
       return [];
     }
 
     return Object.entries(torrentsTx)
-      ?.sort((a, b) => b[1]?.added_on - a[1]?.added_on)
-      ?.filter(([hash]) => !removedTorrs.includes(hash))
-      ?.filter(([hash, torr]) =>
+      .filter(([hash]) => !removedTorrs.includes(hash))
+      .filter(([hash, torr]) =>
         filterCategory !== "Show All" ? torr.category === filterCategory : true
       )
-      ?.filter(([hash, torr]) =>
+      .filter(([hash, torr]) =>
         filterStatus !== "Show All" ? torr.state === filterStatus : true
       )
-      ?.filter(([hash, torr]) => torr.name.includes(filterSearch));
+      .filter(([hash, torr]) => 
+        torr.name.toLowerCase().includes(filterSearch.toLowerCase())
+      )
+      .sort((a, b) => (b[1]?.added_on || 0) - (a[1]?.added_on || 0));
   }, [torrentsTx, removedTorrs, filterCategory, filterStatus, filterSearch]);
 
   const Categories = useMemo(() => {
@@ -362,7 +380,7 @@ const Home = () => {
                   color={
                     draggingOver ? "white" : files.length > 0 ? "green.500" : "blue.500"
                   }
-                  opacity={!!textArea ? 0.5 : undefined}
+                  opacity={textArea ? 0.5 : undefined}
                 >
                   <IoDocumentAttach size={40} />
                   <Heading size={"sm"} noOfLines={1}>
@@ -372,7 +390,7 @@ const Home = () => {
                     accept={".torrent"}
                     multiple
                     onDragEnter={() => {
-                      if (!!textArea) return;
+                      if (textArea) return;
                       setFileError("");
                       setDraggingOver(true);
                     }}
@@ -469,7 +487,7 @@ const Home = () => {
                     autoTmm: settings?.auto_tmm_enabled, 
                     downloadFolder, 
                     category: selectedCategory,
-                    payload: !!textArea ? textArea : files 
+                    payload: textArea ? textArea : files 
                   })
                 }
               >
@@ -545,6 +563,7 @@ const Home = () => {
             )}
 
             <List
+              key={`torrent-list-${Torrents.length}`}
               autoWidth
               rowCount={Torrents.length}
               rowHeight={(230 * fontSizeContext.scale) / 100}
@@ -560,22 +579,25 @@ const Home = () => {
                 key, // Unique key within array of rows
                 index, // Index of row within collection
                 style, // Style object to be applied to row (to position it)
-              }) => (
-                <TorrentBox
-                  key={key}
-                  torrentData={Torrents[index][1]}
-                  hash={Torrents[index][0]}
-                  categories={Object.values(categories || {})}
-                  isSelected={selectedTorrents.includes(Torrents[index][0])}
-                  selectionMode={selectedTorrents.length > 0}
-                  toggleSelection={toggleSelection}
-                  style={{
-                    ...style,
-                    paddingBottom:
-                      index === Torrents.length - 1 ? "30vh" : undefined,
-                  }}
-                />
-              )}
+              }) => {
+                const [hash, data] = Torrents[index];
+                return (
+                  <TorrentBox
+                    key={key}
+                    torrentData={data}
+                    hash={hash}
+                    categories={Object.values(categories || {})}
+                    isSelected={selectedTorrents.includes(hash)}
+                    selectionMode={selectedTorrents.length > 0}
+                    toggleSelection={toggleSelection}
+                    style={{
+                      ...style,
+                      paddingBottom:
+                        index === Torrents.length - 1 ? "30vh" : undefined,
+                    }}
+                  />
+                );
+              }}
             />
 
             {selectedTorrents.length > 0 && (

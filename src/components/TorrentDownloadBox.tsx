@@ -8,7 +8,7 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { useIsLargeScreen } from "../utils/screenSize";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TorrClient } from "../utils/TorrClient";
 import { IoCheckmark } from "react-icons/io5";
 
@@ -31,22 +31,22 @@ const TorrentDownloadBox = ({
   const isLarge = useIsLargeScreen();
   const queryClient = useQueryClient();
 
-  const { mutate, isLoading, isSuccess } = useMutation(
-    "addBox",
-    (magnetURLParam: string) => TorrClient.addTorrent("urls", magnetURLParam, category, savePath),
-    {
-      onSuccess: () => {
-        // Invalidate torrent queries to show new torrent immediately
-        queryClient.invalidateQueries("torrentsTxData");
-      }
+  const { mutate, isPending: isLoading, isSuccess } = useMutation({
+    mutationKey: ["addBox"],
+    mutationFn: (magnetURLParam: string) => TorrClient.addTorrent("urls", magnetURLParam, category, savePath),
+    onSuccess: () => {
+      // Invalidate torrent queries to show new torrent immediately
+      queryClient.invalidateQueries({ queryKey: ["torrentsTxData"] });
     }
-  );
+  });
 
   const {
     mutate: callbackMutation,
-    isLoading: callbackLoading,
+    isPending: callbackLoading,
     isSuccess: callbackSuccess,
-  } = useMutation("addBoxWithCallback", () => onSelect!(), {
+  } = useMutation({
+    mutationKey: ["addBoxWithCallback"],
+    mutationFn: () => onSelect!(),
     onSuccess: (magnetURL) => mutate(magnetURL),
   });
 

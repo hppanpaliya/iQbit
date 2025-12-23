@@ -12,16 +12,16 @@ import IosInput from "./ios/IosInput";
 import { TorrClient } from "../utils/TorrClient";
 import { LoggedInRoutes } from "../Routes";
 import { CredsLocalStorageKey, useLogin } from "../utils/useLogin";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export const AuthChecker = () => {
   const { localCreds } = useLogin();
 
-  const { isSuccess: isWhiteListed } = useQuery(
-    "versionCheck",
-    TorrClient.getVersion,
-    { retry: false }
-  );
+  const { isSuccess: isWhiteListed } = useQuery({
+    queryKey: ["versionCheck"],
+    queryFn: TorrClient.getVersion,
+    retry: false,
+  });
 
   const isLoggedIn = !!localCreds.password && !!localCreds.username;
 
@@ -62,6 +62,7 @@ export const AuthView = () => {
             }}
           >
             <IosInput
+              id={"username"}
               label={"Username"}
               labelWidth={105}
               first
@@ -69,6 +70,7 @@ export const AuthView = () => {
               onChange={setUsername}
             />
             <IosInput
+              id={"password"}
               label={"Password"}
               password
               labelWidth={105}

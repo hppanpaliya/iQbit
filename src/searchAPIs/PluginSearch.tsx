@@ -22,7 +22,7 @@ import {
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { TorrClient } from "../utils/TorrClient";
 import TorrentDownloadBox from "../components/TorrentDownloadBox";
 import SeedsAndPeers from "../components/SeedsAndPeers";
@@ -58,20 +58,17 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
 
   const sortDisclosure = useDisclosure();
 
-  const { data: categories } = useQuery(
-    "torrentsCategoryPlugin",
-    TorrClient.getCategories, {
-      staleTime: 10000
-    }
-  );
+  const { data: categories } = useQuery({
+    queryKey: ["torrentsCategoryPlugin"],
+    queryFn: TorrClient.getCategories,
+    staleTime: 10000,
+  });
 
-  const { data: installedPlugins } = useQuery(
-    "searchPlugins",
-    TorrClient.getSearchPlugins,
-    {
-      staleTime: 60000,
-    }
-  );
+  const { data: installedPlugins } = useQuery({
+    queryKey: ["searchPlugins"],
+    queryFn: TorrClient.getInstalledPlugins,
+    staleTime: 60000,
+  });
 
   const handleCategorySelect = (categoryName: string) => {
     setAddToCategory(categoryName);
@@ -93,46 +90,38 @@ const PluginSearch = (props: SearchProviderComponentProps) => {
   const inputBgColor = useColorModeValue("white", "gray.800");
   const ButtonBgColorHover = useColorModeValue("grayAlpha.300", "grayAlpha.900");
 
-  const { mutate: createSearch, isLoading: createLoading } = useMutation(
-    "createSearch",
-    (query: string) => TorrClient.createSearch(query),
-    {
-      onSuccess: (res) => {
-        setSearchId(res.id);
-        setIsStopped(false);
-        props.filterState.setSourceList([]);
-      },
-    }
-  );
+  const { mutate: createSearch, isPending: createLoading } = useMutation({
+    mutationKey: ["createSearch"],
+    mutationFn: (query: string) => TorrClient.createSearch(query),
+    onSuccess: (res) => {
+      setSearchId(res.id);
+      setIsStopped(false);
+      props.filterState.setSourceList([]);
+    },
+  });
 
-  const { mutate: deleteSearch } = useMutation(
-    "deleteSearch",
-    () => TorrClient.deleteSearch(searchId!),
-    {
-      onSuccess: () => setSearchId(undefined),
-    }
-  );
+  const { mutate: deleteSearch } = useMutation({
+    mutationKey: ["deleteSearch"],
+    mutationFn: () => TorrClient.deleteSearch(searchId!),
+    onSuccess: () => setSearchId(undefined),
+  });
 
-  const { mutate: stopSearch } = useMutation(
-    "stopSearch",
-    () => TorrClient.stopSearch(searchId!),
-    {
-      onSuccess: () => {
-        setIsStopped(true);
-      },
-    }
-  );
+  const { mutate: stopSearch } = useMutation({
+    mutationKey: ["stopSearch"],
+    mutationFn: () => TorrClient.stopSearch(searchId!),
+    onSuccess: () => {
+      setIsStopped(true);
+    },
+  });
 
   const [isStopped, setIsStopped] = useState(false);
 
-  const { data } = useQuery(
-    "getSearches",
-    () => TorrClient.getResults(searchId!),
-    {
-      refetchInterval: !isStopped ? 1000 : false,
-      enabled: !!searchId,
-    }
-  );
+  const { data } = useQuery({
+    queryKey: ["getSearches", searchId],
+    queryFn: () => TorrClient.getResults(searchId!),
+    refetchInterval: !isStopped ? 1000 : false,
+    enabled: !!searchId,
+  });
 
   useEffect(() => {
     if (data?.status === "Stopped") {

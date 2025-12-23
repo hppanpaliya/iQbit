@@ -16,7 +16,7 @@ import { useLocation } from "react-router-dom";
 import { useFilterState } from "../components/Filters";
 import YtsLogo from "../images/ytsLogo";
 import TpbLogo from "../images/TpbLogo";
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { TorrClient } from "../utils/TorrClient";
 import QbitLogo from "../images/qbitLogo";
 import { SearchPluginsPageQuery } from "./SearchPluginsPage";
@@ -108,10 +108,10 @@ const SearchPage = () => {
     ((location?.state as any)?.query as string) || ""
   );
 
-  const { data: plugins, isLoading: pluginsLoading } = useQuery(
-    SearchPluginsPageQuery,
-    TorrClient.getInstalledPlugins
-  );
+  const { data: plugins, isLoading: pluginsLoading } = useQuery({
+    queryKey: [SearchPluginsPageQuery],
+    queryFn: TorrClient.getInstalledPlugins,
+  });
 
   const filterState = useFilterState();
 

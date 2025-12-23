@@ -141,7 +141,7 @@ export function deepCompare(a, b, enforce_properties_order, cyclic) {
           var properties = [];
 
           for (p in a) {
-            if (a.hasOwnProperty(p)) {
+            if (Object.prototype.hasOwnProperty.call(a, p)) {
               properties.push(p);
 
               if (((x = a[p]) === (y = b[p]) && x !== 0) || _equals(x, y))
@@ -153,10 +153,10 @@ export function deepCompare(a, b, enforce_properties_order, cyclic) {
 
           // Check if 'b' has as the same properties as 'a' in the same order
           for (p in b)
-            if (b.hasOwnProperty(p) && properties[l++] != p) return false;
+            if (Object.prototype.hasOwnProperty.call(b, p) && properties[l++] != p) return false;
         } else {
           for (p in a) {
-            if (a.hasOwnProperty(p)) {
+            if (Object.prototype.hasOwnProperty.call(a, p)) {
               ++l;
 
               if (((x = a[p]) === (y = b[p]) && x !== 0) || _equals(x, y))
@@ -167,7 +167,7 @@ export function deepCompare(a, b, enforce_properties_order, cyclic) {
           }
 
           // Check if 'b' has as not more own properties than 'a'
-          for (p in b) if (b.hasOwnProperty(p) && --l < 0) return false;
+          for (p in b) if (Object.prototype.hasOwnProperty.call(b, p) && --l < 0) return false;
         }
 
         return true;

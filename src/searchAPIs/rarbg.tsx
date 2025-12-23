@@ -1,7 +1,7 @@
 import { SearchProviderComponentProps } from "../types";
 import { Flex, VStack } from "@chakra-ui/react";
 import IosSearch from "../components/ios/IosSearch";
-import { useMutation } from "react-query";
+import { useMutation } from "@tanstack/react-query";
 import TorrentDownloadBox from "../components/TorrentDownloadBox";
 import SeedsAndPeers from "../components/SeedsAndPeers";
 import React, {useEffect, useMemo, useState} from "react";
@@ -18,40 +18,38 @@ const RarbgSearch = (props: SearchProviderComponentProps) => {
     mutate: search,
     reset,
     data,
-    isLoading,
-  } = useMutation(
-    "rarbgSearch",
-    () =>
+    isPending: isLoading,
+  } = useMutation({
+    mutationKey: ["rarbgSearch"],
+    mutationFn: () =>
       rarbgAPI.search(
         props.searchState[0],
         props.category as keyof typeof RarbgCategoryDictionary
       ),
-    {
-      onMutate: () =>
-        ReactGA.event({
-          action: "executed",
-          category: "search",
-          label: "rarbg",
-        }),
-      onSuccess: (data) => {
-        props.onSearch && props.onSearch();
+    onMutate: () =>
+      ReactGA.event({
+        action: "executed",
+        category: "search",
+        label: "rarbg",
+      }),
+    onSuccess: (data) => {
+      props.onSearch && props.onSearch();
 
-        if (data?.rate_limit) {
-          setTimeout(search, 2000);
-          return;
-        }
+      if (data?.rate_limit) {
+        setTimeout(search, 2000);
+        return;
+      }
 
-        let sourceList = new Set();
+      let sourceList = new Set();
 
-        data?.torrent_results?.forEach((torr) => {
-          const type = parseFromString(torr.title, typeAliases);
-          sourceList.add(type);
-        });
+      data?.torrent_results?.forEach((torr) => {
+        const type = parseFromString(torr.title, typeAliases);
+        sourceList.add(type);
+      });
 
-        props.filterState.setSourceList(Array.from(sourceList) as string[]);
-      },
-    }
-  );
+      props.filterState.setSourceList(Array.from(sourceList) as string[]);
+    },
+  });
 
   useEffect(() => {
     reset();

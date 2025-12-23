@@ -2,11 +2,12 @@ import {
   createContext,
   PropsWithChildren,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 import { TorrSettings } from "../../types";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { TorrClient } from "../../utils/TorrClient";
 import { deepCompare } from "../../utils/deepCompare";
 
@@ -44,21 +45,24 @@ export const SettingsProvider = (props: PropsWithChildren<{}>) => {
     return !deepCompare(settings, serverSettings);
   }, [settings, serverSettings]);
 
-  const { refetch } = useQuery("getSettings", TorrClient.getSettings, {
-    onSuccess: (settings) => {
-      setSettings(settings);
-      setServerSettings(settings);
-    },
+  const { data: fetchedSettings, refetch } = useQuery({
+    queryKey: ["getSettings"],
+    queryFn: TorrClient.getSettings,
     refetchOnWindowFocus: !needsSaving,
   });
 
-  const { mutate } = useMutation(
-    "saveSettings",
-    () => TorrClient.updateSettings(settings || {}),
-    {
-      onSuccess: () => refetch(),
+  useEffect(() => {
+    if (fetchedSettings) {
+      setSettings(fetchedSettings);
+      setServerSettings(fetchedSettings);
     }
-  );
+  }, [fetchedSettings]);
+
+  const { mutate } = useMutation({
+    mutationKey: ["saveSettings"],
+    mutationFn: () => TorrClient.updateSettings(settings || {}),
+    onSuccess: () => refetch(),
+  });
 
   function updateSetting<T extends keyof TorrSettings>(
     key: T,

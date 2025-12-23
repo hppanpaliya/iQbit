@@ -2,7 +2,7 @@ import {Button, Flex, Heading, useDisclosure} from "@chakra-ui/react";
 import {IoChevronDown} from "react-icons/io5";
 import IosActionSheet from "./ios/IosActionSheet";
 import React from "react";
-import {useQuery} from "react-query";
+import {useQuery} from "@tanstack/react-query";
 import {TorrClient} from "../utils/TorrClient";
 
 export type CategorySelectProps = {
@@ -14,12 +14,11 @@ const CategorySelect = ({category, onSelected}:CategorySelectProps) => {
 
   const catDisclosure = useDisclosure();
 
-  const { data: categories } = useQuery(
-    "torrentsCategory",
-    TorrClient.getCategories, {
-      staleTime: 10000
-    }
-  );
+  const { data: categories } = useQuery({
+    queryKey: ["torrentsCategory"],
+    queryFn: TorrClient.getCategories,
+    staleTime: 10000,
+  });
 
   return (
    <>
@@ -30,7 +29,7 @@ const CategorySelect = ({category, onSelected}:CategorySelectProps) => {
      </Flex>
      <IosActionSheet disclosure={catDisclosure} options={[
        {label: "No Category", onClick: () => onSelected("")},
-       ...(Object.values(categories ?? {})?.map((cat) => ({
+       ...(Object.values(categories ?? {}).map((cat) => ({
          label:cat.name,
          onClick: () => {
            onSelected(cat.name)

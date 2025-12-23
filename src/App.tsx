@@ -5,7 +5,7 @@ import {
   extendTheme,
   ThemeConfig,
 } from "@chakra-ui/react";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { mode } from "@chakra-ui/theme-tools";
 import { AuthChecker } from "./components/Auth";
 import AnnouncementChecker from "./components/AnnouncementChecker";

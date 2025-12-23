@@ -8,7 +8,7 @@ export const LoggedInRoutes = () => {
   const isLarge = useIsLargeScreen();
 
   return (
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Rescroller />
       <Routes>
         {Pages.map((page) => (
