@@ -34,6 +34,7 @@ const SegmentedPicker = (props: SegmentedPickerProps) => {
             justifyContent={"center"}
             key={option}
             pos={"relative"}
+            zIndex={1}
           >
             {index === props.selected && (
               <GlassContainer
@@ -44,7 +45,17 @@ const SegmentedPicker = (props: SegmentedPickerProps) => {
                 zIndex={0}
               />
             )}
-            <Button onClick={() => props.onSelect(index)} variant={"unstyled"}>
+            <Button 
+              onClick={() => props.onSelect(index)} 
+              variant={"unstyled"}
+              width={"100%"}
+              height={"100%"}
+              py={2}
+              px={4}
+              display={"flex"}
+              alignItems={"center"}
+              justifyContent={"center"}
+            >
               {option}
             </Button>
           </Flex>

@@ -140,8 +140,9 @@ const TrendingPage = () => {
       <Text color={"gray.500"}>Trending Movies and Shows from TMDB</Text>
       
       {/* FIX 1: Added Box wrapper for scrollable tabs on small screens */}
-      <Box overflowX="auto" pb={2} mb={2} className="no-scrollbar">
-        <Box minW="max-content">
+      {/* FIX 2: Fixes hidden bar on desktop view */}
+      <Box pb={2} mb={2} className="no-scrollbar">
+        <Box>
             <SegmentedPicker options={tabs} selected={tab} onSelect={setTab} />
         </Box>
       </Box>
