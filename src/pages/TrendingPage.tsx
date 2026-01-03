@@ -38,6 +38,7 @@ import { useNavigate } from "react-router-dom";
 import { SearchPluginsPageQuery } from "./SearchPluginsPage";
 import { TorrClient } from "../utils/TorrClient";
 import CategorySelect from "../components/CategorySelect";
+import RequestButton from "../components/RequestButton";
 
 const smallImage = "http://image.tmdb.org/t/p/w200";
 const originalImage = "http://image.tmdb.org/t/p/original";
@@ -659,6 +660,22 @@ const TrendingPage = () => {
             </VStack>
           </Box>
 
+          {/* Request Button */}
+          {selectedMovie && (
+            <RequestButton
+              tmdbId={selectedMovie.id || 0}
+              title={selectedMovie.title || ""}
+              mediaType="movie"
+              year={selectedMovie.release_date ? parseInt(selectedMovie.release_date.split("-")[0]) : undefined}
+              overview={selectedMovie.overview}
+              posterPath={selectedMovie.poster_path}
+              backdropPath={selectedMovie.backdrop_path}
+              categoryName={addToCategory}
+              savePath={savePath}
+              size="lg"
+            />
+          )}
+
           <FormControl>
             <FormLabel>Download Location</FormLabel>
             <Input
@@ -805,6 +822,20 @@ const TrendingPage = () => {
               )}
             </VStack>
           </Box>
+
+          {/* Request Button for TV */}
+          {selectedTv && (
+            <RequestButton
+              tmdbId={selectedTv.id || 0}
+              title={selectedTv.name || ""}
+              mediaType="tv"
+              year={selectedTv.first_air_date ? parseInt(selectedTv.first_air_date.split("-")[0]) : undefined}
+              overview={selectedTv.overview}
+              posterPath={selectedTv.poster_path}
+              backdropPath={selectedTv.backdrop_path}
+              size="lg"
+            />
+          )}
 
           <SectionSM title={"Search Torrent"}>
             <Flex

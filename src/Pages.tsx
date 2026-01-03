@@ -15,6 +15,10 @@ import {
   IoTextOutline,
   IoTrendingUp,
   IoTrendingUpOutline,
+  IoList,
+  IoListOutline,
+  IoLogoApple,
+  IoApps,
 } from "react-icons/io5";
 import SearchPage from "./pages/SearchPage";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -23,6 +27,8 @@ import SearchPluginsPage from "./pages/SearchPluginsPage";
 import TrendingPage from "./pages/TrendingPage";
 import FontSizeSelection from "./pages/FontSizeSelection";
 import TabSelectorPage from "./pages/TabSelectorPage";
+import RequestsPage from "./pages/RequestsPage";
+import PlexAuthPage from "./pages/PlexAuthPage";
 
 export type PageNames =
   | "sideNav"
@@ -51,7 +57,9 @@ export type PageLabels =
   | "Font Size"
   | "Settings"
   | "Search Plugins"
-  | "Tab Selector";
+  | "Tab Selector"
+  | "Requests"
+  | "Plex";
 
 export const Pages: PageObject[] = [
   {
@@ -83,6 +91,26 @@ export const Pages: PageObject[] = [
       inactive: (props) => <IoTrendingUpOutline {...props} />,
     },
     visibleOn: ["bottomNav", "sideNav", "tabSelector"],
+  },
+  {
+    label: "Requests",
+    url: "/requests",
+    component: <RequestsPage />,
+    Icon: {
+      active: (props) => <IoList {...props} />,
+      inactive: (props) => <IoListOutline {...props} />,
+    },
+    visibleOn: ["sideNav", "mobileSettingsList", "tabSelector"],
+  },
+  {
+    label: "Plex",
+    url: "/plex",
+    component: <PlexAuthPage />,
+    Icon: {
+      active: (props) => <IoLogoApple {...props} />,
+      inactive: (props) => <IoLogoApple {...props} />,
+    },
+    visibleOn: ["sideNavBottom", "mobileSettingsList"],
   },
   {
     label: "Search",
