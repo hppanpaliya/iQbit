@@ -15,9 +15,8 @@ import {
   IoTextOutline,
   IoTrendingUp,
   IoTrendingUpOutline,
-  IoList,
-  IoListOutline,
-  IoLogoApple,
+  IoServer,
+  IoServerOutline,
 } from "react-icons/io5";
 import SearchPage from "./pages/SearchPage";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -26,8 +25,8 @@ import SearchPluginsPage from "./pages/SearchPluginsPage";
 import TrendingPage from "./pages/TrendingPage";
 import FontSizeSelection from "./pages/FontSizeSelection";
 import TabSelectorPage from "./pages/TabSelectorPage";
-import RequestsPage from "./pages/RequestsPage";
-import PlexAuthPage from "./pages/PlexAuthPage";
+import OverseerrPage from "./pages/OverseerrPage";
+import OverseerrConfigPage from "./pages/OverseerrConfigPage";
 
 export type PageNames =
   | "sideNav"
@@ -57,8 +56,8 @@ export type PageLabels =
   | "Settings"
   | "Search Plugins"
   | "Tab Selector"
-  | "Requests"
-  | "Plex";
+  | "Overseerr"
+  | "Overseerr Config";
 
 export const Pages: PageObject[] = [
   {
@@ -92,24 +91,24 @@ export const Pages: PageObject[] = [
     visibleOn: ["bottomNav", "sideNav", "tabSelector"],
   },
   {
-    label: "Requests",
-    url: "/requests",
-    component: <RequestsPage />,
+    label: "Overseerr",
+    url: "/overseerr",
+    component: <OverseerrPage />,
     Icon: {
-      active: (props) => <IoList {...props} />,
-      inactive: (props) => <IoListOutline {...props} />,
+      active: (props) => <IoServer {...props} />,
+      inactive: (props) => <IoServerOutline {...props} />,
     },
-    visibleOn: ["sideNav", "mobileSettingsList", "tabSelector"],
+    visibleOn: ["sideNav", "tabSelector"],
   },
   {
-    label: "Plex",
-    url: "/plex",
-    component: <PlexAuthPage />,
+    label: "Overseerr Config",
+    url: "/overseerr-config",
+    component: <OverseerrConfigPage />,
     Icon: {
-      active: (props) => <IoLogoApple {...props} />,
-      inactive: (props) => <IoLogoApple {...props} />,
+      active: (props) => <IoServer {...props} />,
+      inactive: (props) => <IoServerOutline {...props} />,
     },
-    visibleOn: ["sideNavBottom", "mobileSettingsList"],
+    visibleOn: ["mobileSettingsList", "sideNavBottom"],
   },
   {
     label: "Search",
