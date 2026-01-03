@@ -10,11 +10,6 @@ import {
   HStack,
   Image,
   useColorModeValue,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
   IconButton,
   useToast,
   AlertDialog,
@@ -46,7 +41,6 @@ import {
 import { requestManager, MediaRequest, RequestStatus } from "../utils/RequestManager";
 import PageHeader from "../components/PageHeader";
 import { useQuery, useMutation, useQueryClient } from "react-query";
-import filesize from "filesize";
 
 const smallImage = "http://image.tmdb.org/t/p/w200";
 
@@ -72,7 +66,7 @@ const RequestsPage = () => {
   );
 
   // Get statistics
-  const stats = useMemo(() => requestManager.getStatistics(), [allRequests]);
+  const stats = useMemo(() => requestManager.getStatistics(), []);
 
   // Filter requests
   const filteredRequests = useMemo(() => {
@@ -94,6 +88,7 @@ const RequestsPage = () => {
           duration: 2000,
         });
         refetch();
+        queryClient.invalidateQueries("mediaRequests");
         onClose();
       },
     }
@@ -113,6 +108,7 @@ const RequestsPage = () => {
           duration: 2000,
         });
         refetch();
+        queryClient.invalidateQueries("mediaRequests");
       },
     }
   );

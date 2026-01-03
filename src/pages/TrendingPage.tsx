@@ -106,7 +106,7 @@ const TrendingPage = () => {
   const [loadingMoreDiscovered, setLoadingMoreDiscovered] = useState(false);
   
   // Trending Movies with time window
-  const { data: trendingMovies, refetch: refetchTrendingMovies, isLoading: trendingMoviesLoading } = useQuery(
+  const { refetch: refetchTrendingMovies, isLoading: trendingMoviesLoading } = useQuery(
     ["getTrendingMovies", timeWindow, language, moviesPage],
     async () => {
       const response = await tmdbClient.trending({
@@ -142,7 +142,7 @@ const TrendingPage = () => {
     }
   );
 
-  const { isLoading: topMoviesLoading } = useQuery(
+  const { isLoading: topMoviesLoading, refetch: refetchTopMovies } = useQuery(
     ["getTopMovies", topMoviesPage],
     async () => {
       const res = await tmdbClient.movieTopRated({
@@ -169,7 +169,7 @@ const TrendingPage = () => {
   );
 
   // Discover movies with advanced filters
-  const { data: discoveredMovies, isLoading: discoveredLoading } = useQuery(
+  const { isLoading: discoveredLoading } = useQuery(
     ["discoverMovies", selectedGenre, minRating, sortBy, language, discoveredPage],
     async () => {
       const response = await tmdbClient.discoverMovie({
@@ -234,7 +234,7 @@ const TrendingPage = () => {
   const [selectedTv, setSelectedTv] = useState<TvResult>();
   
   // Trending TV with time window
-  const { data: trendingTv, refetch: refetchTrendingTv, isLoading: trendingTvLoading } = useQuery(
+  const { refetch: refetchTrendingTv, isLoading: trendingTvLoading } = useQuery(
     ["getTrendingTv", timeWindow, language, tvPage],
     async () => {
       const response = await tmdbClient.trending({
@@ -361,6 +361,7 @@ const TrendingPage = () => {
                   refetchTrendingTv();
                 } else if (tab === 2) {
                   setTopMoviesPage(1);
+                  refetchTopMovies();
                 }
               }}
             />
@@ -501,7 +502,7 @@ const TrendingPage = () => {
       </Box>
 
       {/* Loading States */}
-      {(trendingMoviesLoading || trendingTvLoading || discoveredLoading) && (
+      {(trendingMoviesLoading || trendingTvLoading || discoveredLoading || topMoviesLoading) && (
         <Flex justify="center" py={10}>
           <Spinner size="xl" color="blue.500" />
         </Flex>

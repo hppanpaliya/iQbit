@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import {
   Button,
   IconButton,
@@ -57,7 +56,6 @@ const RequestButton = ({
 }: RequestButtonProps) => {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [isCheckingPlex, setIsCheckingPlex] = useState(false);
 
   // Check if media is requested
   const { data: existingRequest, refetch } = useQuery(

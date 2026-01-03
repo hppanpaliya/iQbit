@@ -18,7 +18,6 @@ import {
   IoList,
   IoListOutline,
   IoLogoApple,
-  IoApps,
 } from "react-icons/io5";
 import SearchPage from "./pages/SearchPage";
 import CategoriesPage from "./pages/CategoriesPage";
