@@ -61,6 +61,19 @@ to see in it. My current feature roadmap organized by priority is the following:
 
 1. Add support for Sonarr and Radarr
 
+## New Features: Overseerr-like Media Request Management
+
+iQbit now includes Overseerr-inspired features for managing media requests without a backend server! 
+
+**Key Features:**
+- 🎬 **Media Request System**: Track and manage movie/TV show requests with status tracking
+- 🔐 **Plex Authentication**: Connect to your Plex server to check media availability
+- ⚡ **Quality Profiles**: Choose from 4K, 1080p, 720p, SD, or Any quality
+- 📊 **Request Dashboard**: View statistics and manage all requests in one place
+- ✅ **Library Detection**: Automatically detects if media is already in your Plex library
+
+See [OVERSEERR_FEATURES.md](OVERSEERR_FEATURES.md) for detailed documentation and usage guide.
+
 ## Settings
 
 I added what I think is a decent amount of all the settings onto the WebUI. Qbittorrent has a ton of settings, so if you

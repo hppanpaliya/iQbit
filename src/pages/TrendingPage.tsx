@@ -38,6 +38,7 @@ import { useNavigate } from "react-router-dom";
 import { SearchPluginsPageQuery } from "./SearchPluginsPage";
 import { TorrClient } from "../utils/TorrClient";
 import CategorySelect from "../components/CategorySelect";
+import RequestButton from "../components/RequestButton";
 
 const smallImage = "http://image.tmdb.org/t/p/w200";
 const originalImage = "http://image.tmdb.org/t/p/original";
@@ -105,7 +106,7 @@ const TrendingPage = () => {
   const [loadingMoreDiscovered, setLoadingMoreDiscovered] = useState(false);
   
   // Trending Movies with time window
-  const { data: trendingMovies, refetch: refetchTrendingMovies, isLoading: trendingMoviesLoading } = useQuery(
+  const { refetch: refetchTrendingMovies, isLoading: trendingMoviesLoading } = useQuery(
     ["getTrendingMovies", timeWindow, language, moviesPage],
     async () => {
       const response = await tmdbClient.trending({
@@ -141,7 +142,7 @@ const TrendingPage = () => {
     }
   );
 
-  const { isLoading: topMoviesLoading } = useQuery(
+  const { isLoading: topMoviesLoading, refetch: refetchTopMovies } = useQuery(
     ["getTopMovies", topMoviesPage],
     async () => {
       const res = await tmdbClient.movieTopRated({
@@ -168,7 +169,7 @@ const TrendingPage = () => {
   );
 
   // Discover movies with advanced filters
-  const { data: discoveredMovies, isLoading: discoveredLoading } = useQuery(
+  const { isLoading: discoveredLoading } = useQuery(
     ["discoverMovies", selectedGenre, minRating, sortBy, language, discoveredPage],
     async () => {
       const response = await tmdbClient.discoverMovie({
@@ -233,7 +234,7 @@ const TrendingPage = () => {
   const [selectedTv, setSelectedTv] = useState<TvResult>();
   
   // Trending TV with time window
-  const { data: trendingTv, refetch: refetchTrendingTv, isLoading: trendingTvLoading } = useQuery(
+  const { refetch: refetchTrendingTv, isLoading: trendingTvLoading } = useQuery(
     ["getTrendingTv", timeWindow, language, tvPage],
     async () => {
       const response = await tmdbClient.trending({
@@ -360,6 +361,7 @@ const TrendingPage = () => {
                   refetchTrendingTv();
                 } else if (tab === 2) {
                   setTopMoviesPage(1);
+                  refetchTopMovies();
                 }
               }}
             />
@@ -500,7 +502,7 @@ const TrendingPage = () => {
       </Box>
 
       {/* Loading States */}
-      {(trendingMoviesLoading || trendingTvLoading || discoveredLoading) && (
+      {(trendingMoviesLoading || trendingTvLoading || discoveredLoading || topMoviesLoading) && (
         <Flex justify="center" py={10}>
           <Spinner size="xl" color="blue.500" />
         </Flex>
@@ -659,6 +661,22 @@ const TrendingPage = () => {
             </VStack>
           </Box>
 
+          {/* Request Button */}
+          {selectedMovie && (
+            <RequestButton
+              tmdbId={selectedMovie.id || 0}
+              title={selectedMovie.title || ""}
+              mediaType="movie"
+              year={selectedMovie.release_date ? parseInt(selectedMovie.release_date.split("-")[0]) : undefined}
+              overview={selectedMovie.overview}
+              posterPath={selectedMovie.poster_path}
+              backdropPath={selectedMovie.backdrop_path}
+              categoryName={addToCategory}
+              savePath={savePath}
+              size="lg"
+            />
+          )}
+
           <FormControl>
             <FormLabel>Download Location</FormLabel>
             <Input
@@ -805,6 +823,20 @@ const TrendingPage = () => {
               )}
             </VStack>
           </Box>
+
+          {/* Request Button for TV */}
+          {selectedTv && (
+            <RequestButton
+              tmdbId={selectedTv.id || 0}
+              title={selectedTv.name || ""}
+              mediaType="tv"
+              year={selectedTv.first_air_date ? parseInt(selectedTv.first_air_date.split("-")[0]) : undefined}
+              overview={selectedTv.overview}
+              posterPath={selectedTv.poster_path}
+              backdropPath={selectedTv.backdrop_path}
+              size="lg"
+            />
+          )}
 
           <SectionSM title={"Search Torrent"}>
             <Flex

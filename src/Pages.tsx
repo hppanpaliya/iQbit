@@ -15,6 +15,8 @@ import {
   IoTextOutline,
   IoTrendingUp,
   IoTrendingUpOutline,
+  IoServer,
+  IoServerOutline,
 } from "react-icons/io5";
 import SearchPage from "./pages/SearchPage";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -23,6 +25,8 @@ import SearchPluginsPage from "./pages/SearchPluginsPage";
 import TrendingPage from "./pages/TrendingPage";
 import FontSizeSelection from "./pages/FontSizeSelection";
 import TabSelectorPage from "./pages/TabSelectorPage";
+import OverseerrPage from "./pages/OverseerrPage";
+import OverseerrConfigPage from "./pages/OverseerrConfigPage";
 
 export type PageNames =
   | "sideNav"
@@ -51,7 +55,9 @@ export type PageLabels =
   | "Font Size"
   | "Settings"
   | "Search Plugins"
-  | "Tab Selector";
+  | "Tab Selector"
+  | "Overseerr"
+  | "Overseerr Config";
 
 export const Pages: PageObject[] = [
   {
@@ -83,6 +89,26 @@ export const Pages: PageObject[] = [
       inactive: (props) => <IoTrendingUpOutline {...props} />,
     },
     visibleOn: ["bottomNav", "sideNav", "tabSelector"],
+  },
+  {
+    label: "Overseerr",
+    url: "/overseerr",
+    component: <OverseerrPage />,
+    Icon: {
+      active: (props) => <IoServer {...props} />,
+      inactive: (props) => <IoServerOutline {...props} />,
+    },
+    visibleOn: ["sideNav", "tabSelector"],
+  },
+  {
+    label: "Overseerr Config",
+    url: "/overseerr-config",
+    component: <OverseerrConfigPage />,
+    Icon: {
+      active: (props) => <IoServer {...props} />,
+      inactive: (props) => <IoServerOutline {...props} />,
+    },
+    visibleOn: ["mobileSettingsList", "sideNavBottom"],
   },
   {
     label: "Search",
