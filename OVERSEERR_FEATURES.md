@@ -44,17 +44,23 @@ This document describes the new Overseerr-inspired features added to iQbit for m
 1. **Navigate to Plex Settings**
    - Go to Settings → Plex or use the sidebar
 
-2. **Get Your Plex Token**
+2. **Choose Authentication Method**
+
+   **Option A: Username & Password (Recommended)**
+   - Enter your Plex username or email
+   - Enter your Plex password
+   - Click "Sign In with Plex"
+   - This method uses cookie-based authentication similar to Overseerr
+
+   **Option B: Authentication Token**
    - Sign in to [app.plex.tv](https://app.plex.tv)
    - Play any media item
    - Click three dots (...) → "Get Info"
    - Click "View XML"
    - Look for "X-Plex-Token" in the URL
    - Or follow the [Plex Support Guide](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)
-
-3. **Enter Your Token**
    - Paste your token in the authentication field
-   - Click "Connect to Plex"
+   - Click "Connect with Token"
 
 4. **Configure Server (Optional)**
    - Enter your server URL/IP (e.g., `192.168.1.100`)

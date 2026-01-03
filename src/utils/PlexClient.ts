@@ -147,6 +147,53 @@ export class PlexClient {
     }
   }
 
+  // Authenticate with Plex credentials (cookie-based)
+  // This method mimics the /auth/plex endpoint behavior
+  async authenticateWithCredentials(
+    username: string,
+    password: string
+  ): Promise<PlexUser> {
+    try {
+      // Step 1: Sign in to Plex to get auth token
+      const authResponse = await axios.post(
+        "https://plex.tv/users/sign_in.json",
+        {
+          user: {
+            login: username,
+            password: password,
+          },
+        },
+        {
+          headers: {
+            "X-Plex-Client-Identifier": PLEX_CLIENT_IDENTIFIER,
+            "X-Plex-Product": PLEX_PRODUCT,
+            "X-Plex-Version": PLEX_VERSION,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          withCredentials: true, // Enable cookie handling
+        }
+      );
+
+      const token = authResponse.data.user.authToken;
+      
+      if (!token) {
+        throw new Error("No auth token received from Plex");
+      }
+
+      // Step 2: Use the token to authenticate (reuse existing method)
+      return await this.authenticateWithToken(token);
+    } catch (error) {
+      console.error("Plex credential authentication failed:", error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          throw new Error("Invalid username or password");
+        }
+      }
+      throw new Error("Failed to authenticate with Plex credentials");
+    }
+  }
+
   // Sign out
   signOut() {
     this.authToken = null;

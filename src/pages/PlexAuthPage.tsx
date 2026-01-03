@@ -18,6 +18,11 @@ import {
   HStack,
   Icon,
   useColorModeValue,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
 } from "@chakra-ui/react";
 import { IoLogoApple, IoCheckmarkCircle } from "react-icons/io5";
 import { plexClient } from "../utils/PlexClient";
@@ -29,6 +34,8 @@ interface PlexAuthProps {
 
 const PlexAuthPage = ({ onAuthSuccess }: PlexAuthProps) => {
   const [token, setToken] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [serverUrl, setServerUrl] = useState("");
   const [serverPort, setServerPort] = useState("32400");
   const toast = useToast();
@@ -37,7 +44,7 @@ const PlexAuthPage = ({ onAuthSuccess }: PlexAuthProps) => {
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
 
-  const { mutate: authenticate, isLoading } = useMutation(
+  const { mutate: authenticateWithToken, isLoading: isTokenAuthLoading } = useMutation(
     async (authToken: string) => {
       return await plexClient.authenticateWithToken(authToken);
     },
@@ -65,7 +72,35 @@ const PlexAuthPage = ({ onAuthSuccess }: PlexAuthProps) => {
     }
   );
 
-  const handleAuth = () => {
+  const { mutate: authenticateWithCredentials, isLoading: isCredAuthLoading } = useMutation(
+    async ({ user, pass }: { user: string; pass: string }) => {
+      return await plexClient.authenticateWithCredentials(user, pass);
+    },
+    {
+      onSuccess: (user) => {
+        toast({
+          title: "Authentication successful",
+          description: `Welcome, ${user.username}!`,
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        queryClient.invalidateQueries("plexAuth");
+        if (onAuthSuccess) onAuthSuccess();
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Authentication failed",
+          description: error?.message || "Invalid username or password",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      },
+    }
+  );
+
+  const handleTokenAuth = () => {
     if (!token.trim()) {
       toast({
         title: "Token required",
@@ -76,7 +111,21 @@ const PlexAuthPage = ({ onAuthSuccess }: PlexAuthProps) => {
       });
       return;
     }
-    authenticate(token);
+    authenticateWithToken(token);
+  };
+
+  const handleCredentialAuth = () => {
+    if (!username.trim() || !password.trim()) {
+      toast({
+        title: "Credentials required",
+        description: "Please enter both username and password",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    authenticateWithCredentials({ user: username, pass: password });
   };
 
   const handleServerSetup = () => {
@@ -204,67 +253,127 @@ const PlexAuthPage = ({ onAuthSuccess }: PlexAuthProps) => {
           </Text>
         </Box>
 
-        <Alert status="info" rounded="lg">
-          <AlertIcon />
-          <Box>
-            <AlertTitle>How to get your Plex token:</AlertTitle>
-            <AlertDescription>
-              <Text mt={2}>
-                1. Sign in to{" "}
-                <Link
-                  href="https://app.plex.tv"
-                  isExternal
-                  color="blue.500"
-                  textDecoration="underline"
-                >
-                  app.plex.tv
-                </Link>
-              </Text>
-              <Text>2. Play any media item</Text>
-              <Text>3. Click the three dots (...) → "Get Info"</Text>
-              <Text>4. Click "View XML"</Text>
-              <Text>5. Look for "X-Plex-Token" in the URL</Text>
-              <Text mt={2}>
-                Or visit{" "}
-                <Link
-                  href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/"
-                  isExternal
-                  color="blue.500"
-                  textDecoration="underline"
-                >
-                  Plex Support Guide
-                </Link>
-              </Text>
-            </AlertDescription>
-          </Box>
-        </Alert>
+        <Tabs isFitted variant="enclosed" colorScheme="blue">
+          <TabList mb="1em">
+            <Tab>Username & Password</Tab>
+            <Tab>Auth Token</Tab>
+          </TabList>
 
-        <Box bg={bgColor} p={6} rounded="lg" border="1px" borderColor={borderColor}>
-          <VStack spacing={4} align="stretch">
-            <FormControl isRequired>
-              <FormLabel>Plex Authentication Token</FormLabel>
-              <Input
-                type="password"
-                placeholder="Enter your X-Plex-Token"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") handleAuth();
-                }}
-              />
-            </FormControl>
+          <TabPanels>
+            {/* Cookie-based authentication with username/password */}
+            <TabPanel p={0}>
+              <Box bg={bgColor} p={6} rounded="lg" border="1px" borderColor={borderColor}>
+                <VStack spacing={4} align="stretch">
+                  <Alert status="info" rounded="md" size="sm">
+                    <AlertIcon />
+                    <Box fontSize="sm">
+                      Sign in with your Plex username and password. This generates a secure authentication cookie.
+                    </Box>
+                  </Alert>
 
-            <Button
-              colorScheme="blue"
-              isLoading={isLoading}
-              loadingText="Authenticating..."
-              onClick={handleAuth}
-              size="lg"
-            >
-              Connect to Plex
-            </Button>
-          </VStack>
-        </Box>
+                  <FormControl isRequired>
+                    <FormLabel>Plex Username or Email</FormLabel>
+                    <Input
+                      placeholder="Enter your Plex username or email"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      autoComplete="username"
+                    />
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel>Password</FormLabel>
+                    <Input
+                      type="password"
+                      placeholder="Enter your Plex password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") handleCredentialAuth();
+                      }}
+                      autoComplete="current-password"
+                    />
+                  </FormControl>
+
+                  <Button
+                    colorScheme="blue"
+                    isLoading={isCredAuthLoading}
+                    loadingText="Authenticating..."
+                    onClick={handleCredentialAuth}
+                    size="lg"
+                  >
+                    Sign In with Plex
+                  </Button>
+                </VStack>
+              </Box>
+            </TabPanel>
+
+            {/* Token-based authentication */}
+            <TabPanel p={0}>
+              <Alert status="info" rounded="lg" mb={4}>
+                <AlertIcon />
+                <Box>
+                  <AlertTitle>How to get your Plex token:</AlertTitle>
+                  <AlertDescription>
+                    <Text mt={2}>
+                      1. Sign in to{" "}
+                      <Link
+                        href="https://app.plex.tv"
+                        isExternal
+                        color="blue.500"
+                        textDecoration="underline"
+                      >
+                        app.plex.tv
+                      </Link>
+                    </Text>
+                    <Text>2. Play any media item</Text>
+                    <Text>3. Click the three dots (...) → "Get Info"</Text>
+                    <Text>4. Click "View XML"</Text>
+                    <Text>5. Look for "X-Plex-Token" in the URL</Text>
+                    <Text mt={2}>
+                      Or visit{" "}
+                      <Link
+                        href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/"
+                        isExternal
+                        color="blue.500"
+                        textDecoration="underline"
+                      >
+                        Plex Support Guide
+                      </Link>
+                    </Text>
+                  </AlertDescription>
+                </Box>
+              </Alert>
+
+              <Box bg={bgColor} p={6} rounded="lg" border="1px" borderColor={borderColor}>
+                <VStack spacing={4} align="stretch">
+                  <FormControl isRequired>
+                    <FormLabel>Plex Authentication Token</FormLabel>
+                    <Input
+                      type="password"
+                      placeholder="Enter your X-Plex-Token"
+                      value={token}
+                      onChange={(e) => setToken(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") handleTokenAuth();
+                      }}
+                    />
+                  </FormControl>
+
+                  <Button
+                    colorScheme="blue"
+                    isLoading={isTokenAuthLoading}
+                    loadingText="Authenticating..."
+                    onClick={handleTokenAuth}
+                    size="lg"
+                  >
+                    Connect with Token
+                  </Button>
+                </VStack>
+              </Box>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
 
         <Box bg={bgColor} p={6} rounded="lg" border="1px" borderColor={borderColor}>
           <Heading size="sm" mb={4}>
