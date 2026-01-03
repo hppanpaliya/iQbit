@@ -71,7 +71,7 @@ export class RequestManager {
 
   // Generate unique ID
   private generateId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   // Create a new media request
