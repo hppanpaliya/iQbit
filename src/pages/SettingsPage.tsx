@@ -11,6 +11,7 @@ import {
   IoGitCompare,
   IoLink,
   IoLogoRss,
+  IoMoon,
   IoPhonePortrait,
   IoPricetags,
   IoSpeedometer,
@@ -38,6 +39,7 @@ import SearchPluginsPage from "./SearchPluginsPage";
 import CategoriesPage from "./CategoriesPage";
 import FontSizeSelection from "./FontSizeSelection";
 import TabSelectorPage from "./TabSelectorPage";
+import AppearanceSettings from "./AppearanceSettings";
 import { GlassContainer } from "../components/GlassContainer";
 
 export interface SettingsPageProps {}
@@ -49,7 +51,13 @@ type settingsPageNames =
   | "BitTorrent"
   | "RSS"
   | "Web UI"
-  | "Advanced";
+  | "Advanced"
+  | "Appearance"
+  | "iQbit Updates"
+  | "Search Plugins"
+  | "Categories"
+  | "Font Size"
+  | "Mobile Bottom Tabs";
 
 type SettingsPageObject = {
   icon: ReactElement;
@@ -125,6 +133,12 @@ const SettingsPages: {
     color: "red.900",
     group: "Other Settings",
     mobileOnly: true,
+  },
+  Appearance: {
+    icon: <IoMoon size={iconSize} />,
+    component: <AppearanceSettings />,
+    color: "purple.800",
+    group: "Other Settings",
   },
   "Font Size": {
     icon: <IoText size={iconSize} />,
