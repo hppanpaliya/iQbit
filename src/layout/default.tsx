@@ -24,6 +24,7 @@ import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { defaultTabs } from "../pages/TabSelectorPage";
 import { GlassContainer } from "../components/GlassContainer";
 import { useIsPWA } from "../hooks/useIsPWA";
+import StatusBar from "../components/StatusBar";
 
 export interface DefaultLayoutProps {}
 
@@ -262,7 +263,7 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
           width={"calc(100% - 40px)"}
           left={"20px"}
           position={"fixed"}
-          bottom={isPWA ? "25px" : "5px"}
+          bottom={isPWA ? "55px" : "35px"}
           gap={3}
           id={"mobile-container"}
         >
@@ -311,6 +312,7 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
           </GlassContainer>
         </Flex>
       )}
+      <StatusBar />
     </Box>
   );
 };

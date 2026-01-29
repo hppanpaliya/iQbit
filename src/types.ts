@@ -32,6 +32,7 @@ export type TorrServerState = {
   up_rate_limit: number;
   alltime_dl: number;
   dl_info_speed: number;
+  last_external_address_v4?: string;
 };
 
 export const TorrTorrentInfoStates = [

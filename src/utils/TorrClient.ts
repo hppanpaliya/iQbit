@@ -84,6 +84,11 @@ export const TorrClient = {
     return data;
   },
 
+  getTransferInfo: async (): Promise<TorrServerState> => {
+    const { data } = await APICall.get("transfer/info");
+    return data;
+  },
+
   resume: async (hash = "") => {
     return await APICall.post("torrents/start", `hashes=${hash}`);
   },
