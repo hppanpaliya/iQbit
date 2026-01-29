@@ -312,7 +312,7 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
           </GlassContainer>
         </Flex>
       )}
-      <StatusBar />
+      <StatusBar/>
     </Box>
   );
 };

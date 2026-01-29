@@ -32,6 +32,7 @@ import DownloadsPage from "../components/settings/Downloads/DownloadsPage";
 import SaveAndResetButtons from "../components/settings/SaveAndResetButtons";
 import ConnectionPage from "../components/settings/Connection/ConnectionPage";
 import SpeedPage from "../components/settings/Speed/SpeedPage";
+import BitTorrentPage from "../components/settings/BitTorrent/BitTorrentPage";
 import RequestMoreSettings from "../components/settings/RequestMoreSettings";
 import { logout } from "../components/Auth";
 import AllAnnouncementsPage from "../components/settings/AllAnnouncements";
@@ -92,7 +93,7 @@ const SettingsPages: {
   },
   BitTorrent: {
     icon: <IoGitCompare size={iconSize} />,
-    component: <RequestMoreSettings />,
+    component: <BitTorrentPage />,
     color: "blue.500",
     group: "qBittorrent Settings",
   },

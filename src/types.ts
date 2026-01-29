@@ -342,10 +342,13 @@ export type TorrSettings = {
   create_subfolder_enabled: boolean;
   alt_up_limit: number;
   max_active_downloads: number;
+  max_active_checking_torrents: number;
   slow_torrent_inactive_timer: number;
   max_active_uploads: number;
   lsd: boolean;
   utp_tcp_mixed_mode: TorrSettingsUTPTCPMixedMode;
+  max_inactive_seeding_time: number;
+  max_inactive_seeding_time_enabled: boolean;
   auto_delete_mode: number;
   outgoing_ports_min: number;
   slow_torrent_ul_rate_threshold: number;
@@ -376,6 +379,9 @@ export type TorrSettings = {
   start_paused_enabled: boolean;
   rss_smart_episode_filters: string;
   add_trackers_enabled: boolean;
+  add_trackers_from_url_enabled: boolean;
+  add_trackers_url: string;
+  add_trackers_url_list: string;
   web_ui_secure_cookie_enabled: boolean;
   checking_memory_use: number;
   mail_notification_auth_enabled: boolean;
