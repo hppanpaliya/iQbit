@@ -20,6 +20,7 @@ import {
   Text,
   useColorModeValue,
   useDisclosure,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
 import { TorrCategory, TorrTorrentInfo, TorrFilePriority } from "../types";
@@ -45,6 +46,8 @@ import { Input } from "@chakra-ui/input";
 import TorrentInformationContent from "./TorrentInformationContent";
 import FileList from "./FileList";
 import { CreateETAString } from "../utils/createETAString";
+import TrackersList from "./TrackersList";
+import HttpSourcesList from "./HttpSourcesList";
 
 export interface TorrentBoxProps {
   torrentData: Omit<TorrTorrentInfo, "hash">;
@@ -103,7 +106,11 @@ const TorrentBox = ({
     | "location"
     | "downloadLimit"
     | "uploadLimit"
+    | "forceStart"
+    | "superSeeding"
   >();
+
+  const toast = useToast();
 
   useEffect(() => {
     setWaiting("");
@@ -254,6 +261,126 @@ const TorrentBox = ({
       onSuccess: () => setUploadLimitDisclosure.onClose(),
     }
   );
+
+  const trackersDisclosure = useDisclosure();
+  const { data: torrentTrackers = [], isLoading: trackersLoading } = useQuery(
+    ["torrentTrackers", hash],
+    () => TorrClient.getTrackers(hash),
+    {
+      enabled: trackersDisclosure.isOpen,
+      refetchInterval: trackersDisclosure.isOpen ? 2000 : false,
+    }
+  );
+
+  const { mutate: addTrackers } = useMutation(
+    "addTrackers",
+    (urls: string) => TorrClient.addTrackers(hash, urls),
+    {
+      onSuccess: () => {
+        toast({ title: "Trackers added", status: "success", duration: 2000 });
+      },
+    }
+  );
+
+  const { mutate: editTracker } = useMutation(
+    "editTracker",
+    ({ origUrl, newUrl }: { origUrl: string; newUrl: string }) =>
+      TorrClient.editTracker(hash, origUrl, newUrl),
+    {
+      onSuccess: () => {
+        toast({ title: "Tracker edited", status: "success", duration: 2000 });
+      },
+    }
+  );
+
+  const { mutate: removeTrackers } = useMutation(
+    "removeTrackers",
+    (urls: string) => TorrClient.removeTrackers(hash, urls),
+    {
+      onSuccess: () => {
+        toast({ title: "Trackers removed", status: "success", duration: 2000 });
+      },
+    }
+  );
+
+  const httpSourcesDisclosure = useDisclosure();
+  const { data: torrentHttpSources = [], isLoading: httpSourcesLoading } = useQuery(
+    ["torrentHttpSources", hash],
+    () => TorrClient.getWebSeeds(hash),
+    {
+      enabled: httpSourcesDisclosure.isOpen,
+    }
+  );
+
+  const { mutate: addHttpSources } = useMutation(
+    "addHttpSources",
+    (urls: string) => TorrClient.addHttpSeeds(hash, urls),
+    {
+      onSuccess: () => {
+        toast({ title: "HTTP sources added", status: "success", duration: 2000 });
+      },
+    }
+  );
+
+  const { mutate: removeHttpSources } = useMutation(
+    "removeHttpSources",
+    (urls: string) => TorrClient.removeHttpSeeds(hash, urls),
+    {
+      onSuccess: () => {
+        toast({ title: "HTTP sources removed", status: "success", duration: 2000 });
+      },
+    }
+  );
+
+  const { mutate: toggleForceStart } = useMutation(
+    "toggleForceStart",
+    () => TorrClient.setForceStart(hash, !torrentData.force_start),
+    {
+      onMutate: () => setWaiting("forceStart"),
+      onSettled: () => setWaiting(""),
+    }
+  );
+
+  const { mutate: toggleSuperSeeding } = useMutation(
+    "toggleSuperSeeding",
+    () => TorrClient.setSuperSeeding(hash, !torrentData.super_seeding),
+    {
+      onMutate: () => setWaiting("superSeeding"),
+      onSettled: () => setWaiting(""),
+    }
+  );
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: `${label} copied`,
+      status: "success",
+      duration: 2000,
+      isClosable: true,
+      position: "top",
+    });
+  };
+
+  const handleExport = async () => {
+    try {
+      const blob = await TorrClient.exportTorrent(hash);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${torrentData.name}.torrent`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      toast({
+        title: "Failed to export torrent",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   // File operations
   const filesDisclosure = useDisclosure();
@@ -482,27 +609,8 @@ const TorrentBox = ({
                   danger: true,
                 },
                 {
-                  label: "Change Category",
-                  onClick: () => categoryChangeDisclosure.onOpen(),
-                },
-                {
-                  label: "Rename Torrent",
-                  onClick: () => renameTorrentDisclosure.onOpen(),
-                },
-                {
-                  label: `Sequential Download`,
-                  onClick: toggleSequentialDownload,
-                  checked: torrentData.seq_dl,
-                },
-                {
-                  label: "First and Last piece first",
-                  onClick: toggleFirstLastPiecePrio,
-                  checked: torrentData.f_l_piece_prio,
-                },
-                {
-                  label: "Automatic management",
-                  onClick: toggleAutoManagement,
-                  checked: torrentData.auto_tmm,
+                  isDivider: true,
+                  label: "divider-1",
                 },
                 {
                   label: "Recheck Torrent",
@@ -513,24 +621,115 @@ const TorrentBox = ({
                   onClick: () => reannounce(),
                 },
                 {
-                  label: "Manage Files",
-                  onClick: () => filesDisclosure.onOpen(),
-                },
-                {
-                  label: "Move to Location",
-                  onClick: () => moveDisclosure.onOpen(),
-                },
-                {
-                  label: "Set Download Limit",
-                  onClick: () => setDownloadLimitDisclosure.onOpen(),
-                },
-                {
-                  label: "Set Upload Limit",
-                  onClick: () => setUploadLimitDisclosure.onOpen(),
+                  label: "Export .torrent",
+                  onClick: handleExport,
                 },
                 {
                   label: "Torrent Information",
                   onClick: () => TorrentInformationDisclosure.onOpen(),
+                },
+                
+                {
+                  label: "Network Limits",
+                  children: [
+                    {
+                      label: "Set Download Limit",
+                      onClick: () => setDownloadLimitDisclosure.onOpen(),
+                    },
+                    {
+                      label: "Set Upload Limit",
+                      onClick: () => setUploadLimitDisclosure.onOpen(),
+                    },
+                  ],
+                },
+                {
+                  label: "Copy Info",
+                  children: [
+                    {
+                      label: "Copy Magnet",
+                      onClick: () => copyToClipboard(torrentData.magnet_uri, "Magnet"),
+                    },
+                    {
+                      label: "Copy Hash / ID",
+                      onClick: () => copyToClipboard(hash, "Hash"),
+                    },
+                    {
+                      label: "Copy Name",
+                      onClick: () => copyToClipboard(torrentData.name, "Name"),
+                    },
+                    {
+                      label: "Copy Location",
+                      onClick: () =>
+                        copyToClipboard(
+                          torrentData.save_path || torrentData.content_path,
+                          "Location"
+                        ),
+                    },
+                  ],
+                },
+                {
+                  label: "Advanced",
+                  children: [
+                    {
+                      label: "Manage Files",
+                      onClick: () => filesDisclosure.onOpen(),
+                    },
+                    {
+                      label: "Manage Trackers",
+                      onClick: () => trackersDisclosure.onOpen(),
+                    },
+                    {
+                      label: "Manage HTTP Sources",
+                      onClick: () => httpSourcesDisclosure.onOpen(),
+                    },
+                  ],
+                },
+                {
+                  label: "Management",
+                  children: [
+                    {
+                      label: "Rename Torrent",
+                      onClick: () => renameTorrentDisclosure.onOpen(),
+                    },
+                    {
+                      label: "Change Category",
+                      onClick: () => categoryChangeDisclosure.onOpen(),
+                    },
+                    {
+                      label: "Move to Location",
+                      onClick: () => moveDisclosure.onOpen(),
+                    },
+                  ],
+                },
+                {
+                  label: "Torrent Options",
+                  children: [
+                    {
+                      label: `Sequential Download`,
+                      onClick: toggleSequentialDownload,
+                      checked: torrentData.seq_dl,
+                    },
+                    {
+                      label: "First and Last piece first",
+                      onClick: toggleFirstLastPiecePrio,
+                      checked: torrentData.f_l_piece_prio,
+                    },
+                    {
+                      label: "Automatic management",
+                      onClick: toggleAutoManagement,
+                      checked: torrentData.auto_tmm,
+                    },
+                    {
+                      label: "Force Start",
+                      onClick: () => toggleForceStart(),
+                      checked: torrentData.force_start,
+                    },
+                    {
+                      label: "Super Seeding Mode",
+                      onClick: () => toggleSuperSeeding(),
+                      checked: torrentData.super_seeding,
+                    },
+                  ],
                 },
               ]}
             />
@@ -764,6 +963,54 @@ const TorrentBox = ({
             </Button>
           </LightMode>
         </VStack>
+      </IosBottomSheet>
+      <IosBottomSheet
+        title={"Manage Trackers"}
+        disclosure={trackersDisclosure}
+        modalProps={{ size: "4xl" }}
+      >
+        <TrackersList
+          trackers={torrentTrackers}
+          loading={trackersLoading}
+          onAddTrackers={(urls) =>
+            new Promise((resolve, reject) => {
+              addTrackers(urls, { onSuccess: () => resolve(), onError: reject });
+            })
+          }
+          onEditTracker={(origUrl, newUrl) =>
+            new Promise((resolve, reject) => {
+              editTracker(
+                { origUrl, newUrl },
+                { onSuccess: () => resolve(), onError: reject }
+              );
+            })
+          }
+          onRemoveTrackers={(urls) =>
+            new Promise((resolve, reject) => {
+              removeTrackers(urls, { onSuccess: () => resolve(), onError: reject });
+            })
+          }
+        />
+      </IosBottomSheet>
+      <IosBottomSheet
+        title={"Manage HTTP Sources"}
+        disclosure={httpSourcesDisclosure}
+        modalProps={{ size: "4xl" }}
+      >
+        <HttpSourcesList
+          sources={torrentHttpSources}
+          loading={httpSourcesLoading}
+          onAddSources={(urls) =>
+            new Promise((resolve, reject) => {
+              addHttpSources(urls, { onSuccess: () => resolve(), onError: reject });
+            })
+          }
+          onRemoveSources={(urls) =>
+            new Promise((resolve, reject) => {
+              removeHttpSources(urls, { onSuccess: () => resolve(), onError: reject });
+            })
+          }
+        />
       </IosBottomSheet>
     </div>
   );

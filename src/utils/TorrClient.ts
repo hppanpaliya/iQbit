@@ -295,4 +295,75 @@ export const TorrClient = {
       `hash=${hash}&id=${ids}&priority=${priority}`
     );
   },
+
+  setForceStart: async (hash: string, value: boolean) => {
+    return await APICall.post(
+      "torrents/setForceStart",
+      "hashes=" + hash + "&value=" + value
+    );
+  },
+
+  setSuperSeeding: async (hash: string, value: boolean) => {
+    return await APICall.post(
+      "torrents/setSuperSeeding",
+      "hashes=" + hash + "&value=" + value
+    );
+  },
+
+  exportTorrent: async (hash: string) => {
+    const { data } = await APICall.get("torrents/export", {
+      params: { hash },
+      responseType: "blob",
+    });
+    return data;
+  },
+
+  getTrackers: async (hash: string) => {
+    const { data } = await APICall.get("torrents/trackers", {
+      params: { hash },
+    });
+    return data;
+  },
+
+  addTrackers: async (hash: string, urls: string) => {
+    return await APICall.post(
+      "torrents/addTrackers",
+      `hashes=${hash}&urls=${encodeURIComponent(urls)}`
+    );
+  },
+
+  editTracker: async (hash: string, origUrl: string, newUrl: string) => {
+    return await APICall.post(
+      "torrents/editTracker",
+      `hash=${hash}&origUrl=${encodeURIComponent(origUrl)}&newUrl=${encodeURIComponent(newUrl)}`
+    );
+  },
+
+  removeTrackers: async (hash: string, urls: string) => {
+    return await APICall.post(
+      "torrents/removeTrackers",
+      `hashes=${hash}&urls=${encodeURIComponent(urls)}`
+    );
+  },
+
+  getWebSeeds: async (hash: string) => {
+    const { data } = await APICall.get("torrents/webseeds", {
+      params: { hash },
+    });
+    return data;
+  },
+
+  addHttpSeeds: async (hash: string, urls: string) => {
+    return await APICall.post(
+      "torrents/addHttpSeeds",
+      `hashes=${hash}&urls=${encodeURIComponent(urls)}`
+    );
+  },
+
+  removeHttpSeeds: async (hash: string, urls: string) => {
+    return await APICall.post(
+      "torrents/removeHttpSeeds",
+      `hashes=${hash}&urls=${encodeURIComponent(urls)}`
+    );
+  },
 };

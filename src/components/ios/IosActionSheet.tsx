@@ -11,17 +11,25 @@ import {
   MenuList,
   useColorModeValue,
   UseDisclosureReturn,
+  MenuDivider,
+  Text,
+  VStack,
+  Collapse,
+  useDisclosure,
+  Divider,
 } from "@chakra-ui/react";
 import React, { PropsWithChildren, ReactElement, useEffect, useRef, useState } from "react";
-import { IoCheckmark } from "react-icons/io5";
+import { IoCheckmark, IoChevronForward } from "react-icons/io5";
 import { IoChevronDown, IoChevronUp } from "react-icons/io5";
 import { useIsTouchDevice } from "../../hooks/useIsTouchDevice";
 
 export type IosActionSheetOptions = {
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
   danger?: boolean;
   checked?: boolean;
+  isDivider?: boolean;
+  children?: IosActionSheetOptions[];
 };
 
 export interface IosActionSheetProps<Y> {
@@ -29,6 +37,127 @@ export interface IosActionSheetProps<Y> {
   options: IosActionSheetOptions[];
   trigger?: ReactElement<Y>;
 }
+
+const DesktopSubMenu = ({
+  option,
+  ButtonBgColorHover,
+  renderOptions,
+  disclosure,
+}: {
+  option: IosActionSheetOptions;
+  ButtonBgColorHover: string;
+  renderOptions: (items: IosActionSheetOptions[]) => React.ReactNode;
+  disclosure: UseDisclosureReturn;
+}) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  return (
+    <Menu
+      isOpen={isOpen}
+      onClose={onClose}
+      placement="right-start"
+      offset={[-4, 8]}
+      isLazy
+    >
+      <MenuButton
+        as={MenuItem}
+        onMouseEnter={onOpen}
+        onMouseLeave={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+        closeOnSelect={false}
+        justifyContent={"space-between"}
+        backgroundColor={"transparent"}
+        p={2}
+        px={3}
+        rounded={8}
+        whiteSpace={"nowrap"}
+        _hover={{
+          bgColor: ButtonBgColorHover,
+        }}
+        fontWeight={400}
+        fontSize="sm"
+      >
+        <Box display="flex" justifyContent="space-between" w="100%" alignItems="center">
+          {option.label}
+          <Icon as={IoChevronForward} ml={4} opacity={0.5} />
+        </Box>
+      </MenuButton>
+      <MenuList
+        onMouseEnter={onOpen}
+        onMouseLeave={onClose}
+        backgroundColor={"transparent"}
+        className={"glassEffect"}
+        rounded={12}
+        zIndex={1100}
+        border={"none"}
+        shadow={"lg"}
+        p={2}
+        minWidth="auto"
+        width="fit-content"
+      >
+        <Box className={"glassTint"} />
+        <Box className={"glassShine"} />
+        <Box py={1}>{renderOptions(option.children || [])}</Box>
+      </MenuList>
+    </Menu>
+  );
+};
+
+const MobileGroup = ({
+  option,
+  ButtonBgColorHover,
+  renderOptions,
+  parentDisclosure,
+}: {
+  option: IosActionSheetOptions;
+  ButtonBgColorHover: string;
+  renderOptions: (items: IosActionSheetOptions[], level: number) => React.ReactNode;
+  parentDisclosure: UseDisclosureReturn;
+}) => {
+  const { isOpen, onToggle } = useDisclosure();
+  return (
+    <VStack align="stretch" spacing={0} w="100%">
+      <Box
+        p={3}
+        rounded={10}
+        cursor="pointer"
+        _hover={{
+          bgColor: ButtonBgColorHover,
+        }}
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+      >
+        <Text
+          fontSize="xs"
+          fontWeight="bold"
+          color="gray.500"
+          textTransform="uppercase"
+          letterSpacing="wider"
+        >
+          {option.label}
+        </Text>
+        <Icon
+          as={isOpen ? IoChevronDown : IoChevronForward}
+          color="gray.500"
+          fontSize="xs"
+        />
+      </Box>
+      <Collapse in={isOpen}>
+        <Box pl={2} mb={2}>
+          {renderOptions(option.children || [], 1)}
+        </Box>
+      </Collapse>
+    </VStack>
+  );
+};
 
 function IosActionSheet<Y>({
   options,
@@ -58,6 +187,54 @@ function IosActionSheet<Y>({
       checkScroll();
     }
   }, [disclosure.isOpen]);
+
+  const renderMobileOptions = (items: IosActionSheetOptions[], level = 0) => {
+    return items.map((option, index) => {
+      if (option.isDivider) return <Divider key={index} my={2} opacity={0.5} />;
+
+      if (option.children) {
+        return (
+          <MobileGroup
+            key={index}
+            option={option}
+            ButtonBgColorHover={ButtonBgColorHover}
+            renderOptions={renderMobileOptions}
+            parentDisclosure={disclosure}
+          />
+        );
+      }
+
+      return (
+        <Box
+          key={index}
+          onClick={() => {
+            disclosure.onClose();
+            option.onClick?.();
+          }}
+          color={option?.danger ? "red.500" : "text"}
+          p={3}
+          pl={level > 0 ? 8 : 3}
+          rounded={10}
+          cursor="pointer"
+          _hover={{
+            bgColor: ButtonBgColorHover,
+          }}
+          fontWeight={400}
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          fontSize="md"
+        >
+          {option.label}
+          {option.checked && (
+            <Icon fontSize={"lg"} ml={3}>
+              <IoCheckmark />
+            </Icon>
+          )}
+        </Box>
+      );
+    });
+  };
 
   // Use Drawer for mobile/touch devices, Menu for desktop
   if (isTouchDevice) {
@@ -126,34 +303,7 @@ function IosActionSheet<Y>({
                   }}
                   pt={6}
                 >
-                  {[...options].reverse().map((option, index) => (
-                    <Box
-                      key={index}
-                      onClick={() => {
-                        disclosure.onClose();
-                        option.onClick();
-                      }}
-                      color={option?.danger ? "red.500" : "text"}
-                      p={3}
-                      rounded={10}
-                      cursor="pointer"
-                      _hover={{
-                        bgColor: ButtonBgColorHover,
-                      }}
-                      fontWeight={400}
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      fontSize="md"
-                    >
-                      {option.label}
-                      {option.checked && (
-                        <Icon fontSize={"lg"} ml={3}>
-                          <IoCheckmark />
-                        </Icon>
-                      )}
-                    </Box>
-                  ))}
+                  {renderMobileOptions([...options].reverse())}
                 </Box>
                 {/* Bottom scroll indicator */}
                 <Box
@@ -181,6 +331,53 @@ function IosActionSheet<Y>({
   }
 
   // Desktop version - Menu
+  const renderDesktopOptions = (items: IosActionSheetOptions[]) => {
+    return items.map((option, index) => {
+      if (option.isDivider) return <MenuDivider key={index} opacity={0.2} />;
+
+      if (option.children) {
+        return (
+          <DesktopSubMenu
+            key={index}
+            option={option}
+            ButtonBgColorHover={ButtonBgColorHover}
+            renderOptions={renderDesktopOptions}
+            disclosure={disclosure}
+          />
+        );
+      }
+
+      return (
+        <MenuItem
+          key={index}
+          onClick={() => {
+            disclosure.onClose();
+            option.onClick?.();
+          }}
+          color={option?.danger ? "red.500" : "text"}
+          justifyContent={"space-between"}
+          backgroundColor={"transparent"}
+          p={2}
+          px={3}
+          rounded={8}
+          whiteSpace={"nowrap"}
+          _hover={{
+            bgColor: ButtonBgColorHover,
+          }}
+          fontWeight={400}
+          fontSize="sm"
+        >
+          {option.label}
+          {option.checked && (
+            <Icon fontSize={"md"} ml={3}>
+              <IoCheckmark />
+            </Icon>
+          )}
+        </MenuItem>
+      );
+    });
+  };
+
   const triggerWithoutOnClick = trigger ? React.cloneElement(trigger as React.ReactElement<any>, { onClick: undefined }) : null;
   return (
     <>
@@ -206,34 +403,7 @@ function IosActionSheet<Y>({
           <Box className={"glassShine"} />
 
           <Box py={2} px={2}>
-            {[...options].reverse().map((option, index) => (
-              <MenuItem
-                key={index}
-                onClick={() => {
-                  disclosure.onClose();
-                  option.onClick();
-                }}
-                color={option?.danger ? "red.500" : "text"}
-                justifyContent={"space-between"}
-                backgroundColor={"transparent"}
-                p={2}
-                px={3}
-                rounded={8}
-                whiteSpace={"nowrap"}
-                _hover={{
-                  bgColor: ButtonBgColorHover,
-                }}
-                fontWeight={400}
-                fontSize="sm"
-              >
-                {option.label}
-                {option.checked && (
-                  <Icon fontSize={"md"} ml={3}>
-                    <IoCheckmark />
-                  </Icon>
-                )}
-              </MenuItem>
-            ))}
+            {renderDesktopOptions([...options].reverse())}
           </Box>
         </MenuList>
       </Menu>
