@@ -43,7 +43,8 @@ const StatusBar = () => {
   return (
     <Box
       width="100%"
-      height="30px"
+      height="calc(30px + env(safe-area-inset-bottom))"
+      pb="env(safe-area-inset-bottom)"
       bg={bgColor}
       borderTop="1px solid"
       borderColor={borderColor}
@@ -55,7 +56,7 @@ const StatusBar = () => {
       position="fixed"
       bottom={0}
       left={0}
-      zIndex={2000}
+      zIndex={500}
       userSelect="none"
     >
       <Flex justify="space-between" w="100%" overflowX="auto" sx={{

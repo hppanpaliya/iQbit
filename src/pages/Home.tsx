@@ -34,10 +34,15 @@ import { useLocalStorage } from "usehooks-ts";
 import { useFontSizeContext } from "../components/FontSizeProvider";
 import { useQueryClient } from "react-query";
 
+import { useIsLargeScreen } from "../utils/screenSize";
+import { useIsPWA } from "../hooks/useIsPWA";
+
 import { List, WindowScroller } from "react-virtualized";
 
 const Home = () => {
   const queryClient = useQueryClient();
+  const isLarge = useIsLargeScreen();
+  const isPWA = useIsPWA();
   
   const { mutate: resumeAll } = useMutation("resumeAll", TorrClient.resumeAll);
 
@@ -581,7 +586,13 @@ const Home = () => {
             {selectedTorrents.length > 0 && (
               <Box
                 position="fixed"
-                bottom={5}
+                bottom={
+                  isLarge
+                    ? 12
+                    : isPWA
+                    ? "calc(140px + env(safe-area-inset-bottom))"
+                    : "130px"
+                }
                 left="50%"
                 transform="translateX(-50%)"
                 zIndex={1000}

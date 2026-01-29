@@ -164,14 +164,14 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
             </Box>
             <Flex
               flexGrow={1}
-              mt={6}
               as={"aside"}
               backgroundColor={largeWorkAreaBgColor}
-              height={"calc(100dvh - 40px)"}
+              position={"fixed"}
+              top={6}
+              bottom={"45px"}
               shadow={"lg"}
               rounded={12}
               overflow={"hidden"}
-              position={"fixed"}
               width={`calc(100% - ${sidebarWidth + 70}px)`}
               left={`${sidebarWidth + 50}px`}
               id={"desktop-container"}
@@ -263,7 +263,7 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
           width={"calc(100% - 40px)"}
           left={"20px"}
           position={"fixed"}
-          bottom={isPWA ? "55px" : "35px"}
+          bottom={isPWA ? "calc(60px + env(safe-area-inset-bottom))" : "40px"}
           gap={3}
           id={"mobile-container"}
         >
