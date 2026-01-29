@@ -32,16 +32,16 @@ export type Provider = {
 };
 
 export const providers: { [i in ProviderKeys]: Provider } = {
-  YTS: {
-    logo: <YtsLogo />,
-    name: "YTS",
-    categories: ["Movies"],
-  },
   plugin: {
     logo: <QbitLogo />,
     name: "Plugins",
     categories: ["all"],
     experimental: true,
+  },
+  YTS: {
+    logo: <YtsLogo />,
+    name: "YTS",
+    categories: ["Movies"],
   },
   TPB: {
     logo: <TpbLogo />,
@@ -101,7 +101,7 @@ const ProviderButton = (
 const SearchPage = () => {
   const location = useLocation();
 
-  const [selectedProvider, setSelectedProvider] = useState<ProviderKeys>("YTS");
+  const [selectedProvider, setSelectedProvider] = useState<ProviderKeys>("plugin");
   const [selectedCategory, setSelectedCategory] = useState(0);
 
   const searchState = useState(
