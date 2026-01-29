@@ -1,4 +1,9 @@
-import React, { PropsWithChildren, useEffect } from "react";
+import React, {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import {
   Box,
   Button,
@@ -15,7 +20,7 @@ import Home from "../pages/Home";
 import { useLocation } from "react-router-dom";
 import { useLogin } from "../utils/useLogin";
 import { logout } from "../components/Auth";
-import { useReadLocalStorage } from "usehooks-ts";
+import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { defaultTabs } from "../pages/TabSelectorPage";
 import { GlassContainer } from "../components/GlassContainer";
 import { useIsPWA } from "../hooks/useIsPWA";
@@ -49,8 +54,45 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
 
   const isPWA = useIsPWA();
   const isLarge = useIsLargeScreen();
+  const [sidebarWidth, setSidebarWidth] = useLocalStorage(
+    "sidebar-width-v1",
+    400
+  );
+  const [isResizing, setIsResizing] = useState(false);
+
+  const startResizing = useCallback(() => {
+    setIsResizing(true);
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  const resize = useCallback(
+    (mouseMoveEvent: MouseEvent) => {
+      if (isResizing) {
+        const newWidth = Math.min(
+          Math.max(mouseMoveEvent.clientX - 20, 300),
+          800
+        );
+        setSidebarWidth(newWidth);
+      }
+    },
+    [isResizing, setSidebarWidth]
+  );
+
+  useEffect(() => {
+    window.addEventListener("mousemove", resize);
+    window.addEventListener("mouseup", stopResizing);
+    return () => {
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
+    };
+  }, [resize, stopResizing]);
 
   const largeWorkAreaBgColor = useColorModeValue("white", "gray.900");
+  const resizeLineColor = useColorModeValue("gray.200", "gray.700");
+  const resizeHandleColor = useColorModeValue("gray.300", "gray.600");
 
   const storedTabs = useReadLocalStorage<(PageLabels | "")[]>("tabs-v2");
   const tabsSelected = storedTabs ?? defaultTabs;
@@ -71,24 +113,68 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
         mb={"30vh"}
         id={"app-container"}
       >
-        <Box maxWidth={isLarge ? "400px" : undefined} width={"100%"}>
+        <Box maxWidth={isLarge ? sidebarWidth + "px" : undefined} width={"100%"}>
           {isLarge ? <Home /> : props.children}
         </Box>
         {isLarge && (
-          <Flex
-            flexGrow={1}
-            mt={6}
-            as={"aside"}
-            backgroundColor={largeWorkAreaBgColor}
-            height={"calc(100dvh - 40px)"}
-            shadow={"lg"}
-            rounded={12}
-            overflow={"hidden"}
-            position={"fixed"}
-            width={"calc(100% - 470px)"}
-            left={"450px"}
-            id={"desktop-container"}
-          >
+          <>
+            <Box
+              position={"fixed"}
+              left={`${sidebarWidth + 15}px`}
+              width={"40px"}
+              height={"100vh"}
+              top={0}
+              cursor={"col-resize"}
+              onMouseDown={startResizing}
+              zIndex={100}
+              display={"flex"}
+              justifyContent={"center"}
+              alignItems={"center"}
+              _hover={{
+                "& .resize-line": {
+                  opacity: 0.5,
+                  backgroundColor: "blue.500",
+                },
+                "& .resize-handle": {
+                  opacity: 1,
+                  transform: "scale(1.2)",
+                  backgroundColor: "blue.500",
+                },
+              }}
+            >
+              <Box
+                className="resize-line"
+                width={"1px"}
+                height={"100%"}
+                backgroundColor={isResizing ? "blue.500" : resizeLineColor}
+                opacity={isResizing ? 1 : 0.5}
+                transition={"all 0.2s"}
+              />
+              <Box
+                className="resize-handle"
+                position={"absolute"}
+                width={"6px"}
+                height={"40px"}
+                backgroundColor={isResizing ? "blue.500" : resizeHandleColor}
+                rounded={"full"}
+                opacity={isResizing ? 1 : 0.8}
+                transition={"all 0.2s"}
+              />
+            </Box>
+            <Flex
+              flexGrow={1}
+              mt={6}
+              as={"aside"}
+              backgroundColor={largeWorkAreaBgColor}
+              height={"calc(100dvh - 40px)"}
+              shadow={"lg"}
+              rounded={12}
+              overflow={"hidden"}
+              position={"fixed"}
+              width={`calc(100% - ${sidebarWidth + 70}px)`}
+              left={`${sidebarWidth + 50}px`}
+              id={"desktop-container"}
+            >
             <Flex
               flexDirection={"column"}
               backgroundColor={"grayAlpha.300"}
@@ -168,6 +254,7 @@ const DefaultLayout = (props: PropsWithChildren<DefaultLayoutProps>) => {
                 : props.children}
             </Flex>
           </Flex>
+          </>
         )}
       </Flex>
       {!isLarge && (
