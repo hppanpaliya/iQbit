@@ -315,6 +315,7 @@ export type TorrSettings = {
   disk_cache: number;
   max_ratio: number;
   rss_refresh_interval: number;
+  rss_fetch_delay: number;
   web_ui_port: number;
   upload_slots_behavior: TorrSettingsUploadSlotsBehavior;
   limit_utp_rate: boolean;
