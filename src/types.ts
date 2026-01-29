@@ -234,6 +234,18 @@ export enum TorrSettingsUploadSlotsBehavior {
   UplaodRateBased,
 }
 
+export enum TorrSettingsDiskIOType {
+  Default,
+  POSIX,
+  MemoryMapped,
+}
+
+export enum TorrSettingsDiskIOMode {
+  DisableOSCache,
+  EnableOSCache,
+  WriteThrough,
+}
+
 export enum TorrSettingsUTPTCPMixedMode {
   preferTCP,
   peerProportional,
@@ -395,6 +407,43 @@ export type TorrSettings = {
   export_dir: string;
   web_ui_reverse_proxy_enabled: boolean;
   web_ui_reverse_proxies_list: string;
+  resume_data_storage_type: string;
+  torrent_content_remove_option: string;
+  memory_working_set_limit: number;
+  torrent_file_size_limit: number;
+  confirm_torrent_recheck: boolean;
+  app_instance_name: string;
+  reannounce_when_address_changed: boolean;
+  embedded_tracker_port_forwarding: boolean;
+  ignore_ssl_errors: boolean;
+  python_executable_path: string;
+  bdecode_depth_limit: number;
+  bdecode_token_limit: number;
+  hashing_threads: number;
+  disk_queue_size: number;
+  disk_io_type: TorrSettingsDiskIOType;
+  disk_io_read_mode: TorrSettingsDiskIOMode;
+  disk_io_write_mode: TorrSettingsDiskIOMode;
+  connection_speed: number;
+  socket_send_buffer_size: number;
+  socket_receive_buffer_size: number;
+  upnp_lease_duration: number;
+  peer_tos: number;
+  idn_support_enabled: boolean;
+  validate_https_tracker_certificate: boolean;
+  ssrf_mitigation: boolean;
+  block_peers_on_privileged_ports: boolean;
+  announce_port: number;
+  max_concurrent_http_announces: number;
+  peer_turnover: number;
+  peer_turnover_cutoff: number;
+  peer_turnover_interval: number;
+  request_queue_size: number;
+  dht_bootstrap_nodes: string;
+  i2p_inbound_quantity: number;
+  i2p_outbound_quantity: number;
+  i2p_inbound_length: number;
+  i2p_outbound_length: number;
 };
 
 export type SearchProviderComponentProps = {

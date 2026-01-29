@@ -34,6 +34,7 @@ import ConnectionPage from "../components/settings/Connection/ConnectionPage";
 import SpeedPage from "../components/settings/Speed/SpeedPage";
 import BitTorrentPage from "../components/settings/BitTorrent/BitTorrentPage";
 import RSSPage from "../components/settings/RSS/RSSPage";
+import AdvancedPage from "../components/settings/Advanced/AdvancedPage";
 import RequestMoreSettings from "../components/settings/RequestMoreSettings";
 import { logout } from "../components/Auth";
 import AllAnnouncementsPage from "../components/settings/AllAnnouncements";
@@ -112,7 +113,7 @@ const SettingsPages: {
   },
   Advanced: {
     icon: <IoCog size={iconSize} />,
-    component: <RequestMoreSettings />,
+    component: <AdvancedPage />,
     color: "gray.800",
     group: "qBittorrent Settings",
   },
